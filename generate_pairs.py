@@ -10,6 +10,7 @@ class GeneratePairs:
 
     Doc Reference: http://vis-www.cs.umass.edu/lfw/README.txt
     """
+    counter = 1
 
     def __init__(self, data_dir, pairs_filepath, img_ext):
         """
@@ -31,7 +32,6 @@ class GeneratePairs:
         """
         Generate all matches pairs
         """
-        counter = 1
         for name in os.listdir(self.data_dir):
             if name == ".DS_Store":
                 continue
@@ -48,11 +48,11 @@ class GeneratePairs:
                     temp = random.choice(a).split("_")  # This line may vary depending on how your images are named.
                     w = temp[0] + "_" + temp[1]
                     try:
-                        l = random.choice(a).split("_")[2].lstrip("0").rstrip(self.img_ext)
-                        r = random.choice(a).split("_")[2].lstrip("0").rstrip(self.img_ext)
+                        l = random.choice(a).split("_")[-1].lstrip("0").rstrip(self.img_ext)
+                        r = random.choice(a).split("_")[-1].lstrip("0").rstrip(self.img_ext)
                         f.write(w + "\t" + l + "\t" + r + "\n")
-                        print(w + " " + l + " " + r, 'counter: ', counter)
-                        counter += 1
+                        print(w + " " + l + " " + r, 'counter: ', self.counter)
+                        self.counter += 1
                     except Exception as err:
                         print(err)
                         # print('Setting index to 1')
@@ -81,11 +81,15 @@ class GeneratePairs:
                     file1 = random.choice(os.listdir(self.data_dir + '\\' + name))
                     # file2 = random.choice(os.listdir(self.data_dir + other_dir))
                     file2 = random.choice(os.listdir(self.data_dir + '\\' + other_dir))
+                    if 'Yang_Hee_Kim' in file2:
+                        print()
                     # f.write(name + "\t" + file1.split("_")[2].lstrip("0").rstrip(self.img_ext) + "\t")
-                    f.write(name + "\t" + file1.split("_")[2].lstrip("0").rstrip(self.img_ext) + "\t" + other_dir + "\t" + file2.split("_")[
-                        2].lstrip("0").rstrip(self.img_ext) + "\n")
-                    # print(name + " " + file1.split("_")[2].lstrip("0").rstrip(self.img_ext) + ' ' + other_dir + ' ' +
-                    #       file2.split("_")[2].lstrip("0").rstrip(self.img_ext) )
+                    f.write(name + "\t" + file1.split("_")[-1].lstrip("0").rstrip(self.img_ext) + "\t" + other_dir + "\t" + file2.split("_")[
+                        -1].lstrip("0").rstrip(self.img_ext) + "\n")
+                    print(name + " " + file1.split("_")[-1].lstrip("0").rstrip(self.img_ext) + ' ' + other_dir + ' ' +
+                          file2.split("_")[-1].lstrip("0").rstrip(self.img_ext), 'counter:', self.counter)
+                    self.counter += 1
+        print()
                 # f.write("\n")
 
 
