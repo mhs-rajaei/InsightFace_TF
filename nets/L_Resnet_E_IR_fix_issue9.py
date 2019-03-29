@@ -1,5 +1,4 @@
 import tensorflow as tf
-
 import tensorlayer as tl
 from tensorflow.contrib.layers.python.layers import utils
 import collections
