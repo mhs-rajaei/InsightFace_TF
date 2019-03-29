@@ -46,12 +46,19 @@ class GeneratePairs:
             with open(self.pairs_filepath, "a") as f:
                 for i in range(3):
                     temp = random.choice(a).split("_")  # This line may vary depending on how your images are named.
-                    w = temp[0] + "_" + temp[1]
+                    # w = temp[0] + "_" + temp[1]
+                    w = '_'.join(temp[:-1])
                     try:
                         l = random.choice(a).split("_")[-1].lstrip("0").rstrip(self.img_ext)
                         r = random.choice(a).split("_")[-1].lstrip("0").rstrip(self.img_ext)
-                        f.write(w + "\t" + l + "\t" + r + "\n")
+
                         print(w + " " + l + " " + r, 'counter: ', self.counter)
+
+                        if 'William_Ford' in a:
+                            print()
+
+
+                        f.write(w + "\t" + l + "\t" + r + "\n")
                         self.counter += 1
                     except Exception as err:
                         print(err)
@@ -81,6 +88,8 @@ class GeneratePairs:
                     file1 = random.choice(os.listdir(self.data_dir + '\\' + name))
                     # file2 = random.choice(os.listdir(self.data_dir + other_dir))
                     file2 = random.choice(os.listdir(self.data_dir + '\\' + other_dir))
+                    if 'William_Ford' in file1 or 'William_Ford' in file2:
+                        print()
                     if 'Yang_Hee_Kim' in file2:
                         print()
                     # f.write(name + "\t" + file1.split("_")[2].lstrip("0").rstrip(self.img_ext) + "\t")

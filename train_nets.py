@@ -51,7 +51,7 @@ class Args:
     lr_steps = [40000, 60000, 80000]
     momentum = 0.9
     weight_deacy = 5e-4
-    eval_datasets = [lfw_dir_path]
+    eval_datasets = lfw_dir_path
     eval_pair = lfw_pairs_path
     eval_db_path = './datasets/faces_ms1m_112x112'
     # image_size = [112, 112]
@@ -133,12 +133,12 @@ if __name__ == '__main__':
     # 2.2 prepare validate datasets
     ver_list = []
     ver_name_list = []
-    for db in args.eval_datasets:
-        print('begin db %s convert.' % db)
-        # data_set = eval_data_reader.load_bin(db, args.image_size, args)
-        data_set = eval_data_reader.load_eval_datasets(db, args)
-        ver_list.append(data_set)
-        ver_name_list.append(db)
+    # for db in args.eval_datasets:
+    print('begin db %s convert.' % args.eval_datasets)
+    # data_set = eval_data_reader.load_bin(db, args.image_size, args)
+    data_set = eval_data_reader.load_eval_datasets(args)
+    ver_list.append(data_set)
+    ver_name_list.append(args.eval_datasets)
 
     # 3. define network, loss, optimize method, learning rate schedule, summary writer, saver
     # 3.1 inference phase

@@ -8,6 +8,7 @@ import cv2
 import io
 import PIL.Image
 import mxnet.ndarray as nd
+from pprint import pprint
 
 
 def get_parser():
@@ -31,13 +32,26 @@ def add_extension(path):
         raise RuntimeError('No file "%s" with extension png or jpg.' % path)
 
 
+def remove_duplicates(list):
+    final_list = []
+    for num in list:
+        if num not in final_list:
+            final_list.append(num)
+    return final_list
+
+
 def read_pairs(pairs_filename):
     pairs = []
     with open(pairs_filename, 'r') as f:
         for line in f.readlines()[1:]:
             pair = line.strip().split()
-            pairs.append(pair)
+            # print(line)
+            pprint(pair)
+            if pair not in pairs:
+                pairs.append(pair)
+    # pairs = remove_duplicates(pairs)
     return np.array(pairs)
+    # return pairs
 
 
 def get_paths(args):
@@ -178,7 +192,7 @@ def load_bin(db_name, image_size, args):
     return data_list, issame_list
 
 
-def load_eval_datasets(db_name, args):
+def load_eval_datasets(args):
     # bins, issame_list = pickle.load(open(os.path.join(args.eval_db_path, db_name+'.bin'), 'rb'), encoding='bytes')
     lfw_paths, actual_issame = get_paths(args)
     data_list = []
