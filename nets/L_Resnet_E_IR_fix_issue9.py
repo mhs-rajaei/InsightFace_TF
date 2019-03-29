@@ -1,4 +1,5 @@
 import tensorflow as tf
+
 import tensorlayer as tl
 from tensorflow.contrib.layers.python.layers import utils
 import collections
@@ -6,6 +7,7 @@ from tensorlayer.layers import Layer, list_remove_repeat
 
 
 class ElementwiseLayer(Layer):
+# class ElementwiseLayer(layers):
     """
     The :class:`ElementwiseLayer` class combines multiple :class:`Layer` which have the same output shapes by a given elemwise-wise operation.
 
@@ -26,7 +28,8 @@ class ElementwiseLayer(Layer):
         name ='elementwise_layer',
         act = None,
     ):
-        Layer.__init__(self, name=name)
+        # Layer.__init__(self, name=name)
+        Layer.__init__(self, name=name, prev_layer=None)
 
         if act:
             print("  [TL] ElementwiseLayer %s: size:%s fn:%s, act:%s" % (
@@ -107,7 +110,8 @@ class BatchNormLayer(Layer):
             trainable=None,
             name='batchnorm_layer',
     ):
-        Layer.__init__(self, name=name)
+        # Layer.__init__(self, name=name)
+        Layer.__init__(self, name=name, prev_layer=None)
         self.inputs = layer.outputs
         print("  [TL] BatchNormLayer %s: decay:%f epsilon:%f act:%s is_train:%s" % (self.name, decay, epsilon, act.__name__, is_train))
         x_shape = self.inputs.get_shape()

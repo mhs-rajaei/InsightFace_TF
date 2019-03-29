@@ -62,7 +62,7 @@ def mx2tfrecords(imgidx, imgrec, args):
     writer.close()
 
 
-def parse_function(example_proto):
+def parse_function(example_proto, label):
     features = {'image_raw': tf.FixedLenFeature([], tf.string),
                 'label': tf.FixedLenFeature([], tf.int64)}
     features = tf.parse_single_example(example_proto, features)
@@ -77,6 +77,41 @@ def parse_function(example_proto):
     img = tf.image.random_flip_left_right(img)
     label = tf.cast(features['label'], tf.int64)
     return img, label
+
+
+def mr_parse_function(image_path, label=None, image_size=192, seed=313, normalize=False, do_resize=False, do_random_crop=False,
+                      do_random_flip_up_down=False, do_random_flip_left_right=True):
+    image_string = tf.read_file(image_path)
+    # img = tf.image.decode_image(image_string)
+
+    img = tf.cond(tf.image.is_jpeg(image_string),
+                  lambda: tf.image.decode_jpeg(image_string, channels=3),
+                  lambda: tf.image.decode_png(image_string, channels=3))
+    # You can do more image distortion here for training data
+    if do_resize:
+        # img = tf.reshape(img, shape=(image_size, image_size, 3))
+        img = tf.image.resize_images(img, [image_size, image_size])
+    r, g, b = tf.split(img, num_or_size_splits=3, axis=-1)
+    img = tf.concat([b, g, r], axis=-1)
+    img = tf.cast(img, dtype=tf.float32)
+    img = tf.subtract(img, 127.5)
+    img = tf.multiply(img,  0.0078125)
+    if do_random_flip_left_right:
+        img = tf.image.random_flip_left_right(img)
+
+    # https://www.tensorflow.org/api_guides/python/image
+    if do_random_crop:
+        # A random variable
+        rand_var = tf.random_uniform([], minval=0, maxval=0.5, dtype=tf.float32, seed=seed)
+        img = tf.image.central_crop(img, central_fraction=rand_var)
+    if do_random_flip_up_down:
+        img = tf.image.random_flip_up_down(img, seed=seed)
+
+    if normalize:
+        tf.divide(tf.cast(img, dtype=tf.float32), tf.constant(255.0, dtype=tf.float32))  # normalize to [0,1] range
+    if label is not None:
+        return img, label
+    return img
 
 
 if __name__ == '__main__':

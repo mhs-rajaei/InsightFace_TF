@@ -22,6 +22,50 @@ def get_parser():
     return args
 
 
+def add_extension(path):
+    if os.path.exists(path+'.jpg'):
+        return path+'.jpg'
+    elif os.path.exists(path+'.png'):
+        return path+'.png'
+    else:
+        raise RuntimeError('No file "%s" with extension png or jpg.' % path)
+
+
+def read_pairs(pairs_filename):
+    pairs = []
+    with open(pairs_filename, 'r') as f:
+        for line in f.readlines()[1:]:
+            pair = line.strip().split()
+            pairs.append(pair)
+    return np.array(pairs)
+
+
+def get_paths(args):
+    # args.eval_datasets = os.path.expanduser(args.eval_datasets)
+    pairs = read_pairs(os.path.expanduser(args.eval_pair))
+
+    nrof_skipped_pairs = 0
+    path_list = []
+    issame_list = []
+    for pair in pairs:
+        if len(pair) == 3:
+            path0 = add_extension(os.path.join(args.eval_datasets, pair[0], pair[0] + '_' + '%04d' % int(pair[1])))
+            path1 = add_extension(os.path.join(args.eval_datasets, pair[0], pair[0] + '_' + '%04d' % int(pair[2])))
+            issame = True
+        elif len(pair) == 4:
+            path0 = add_extension(os.path.join(args.eval_datasets, pair[0], pair[0] + '_' + '%04d' % int(pair[1])))
+            path1 = add_extension(os.path.join(args.eval_datasets, pair[2], pair[2] + '_' + '%04d' % int(pair[3])))
+            issame = False
+        if os.path.exists(path0) and os.path.exists(path1):  # Only add the pair if both paths exist
+            path_list += (path0, path1)
+            issame_list.append(issame)
+        else:
+            nrof_skipped_pairs += 1
+    if nrof_skipped_pairs > 0:
+        print('Skipped %d image pairs' % nrof_skipped_pairs)
+
+    return path_list, issame_list
+
 def load_bin(path, image_size):
     '''
     :param path: the input file path
@@ -118,6 +162,28 @@ def load_bin(db_name, image_size, args):
     data_list = []
     for _ in [0,1]:
         data = np.empty((len(issame_list)*2, image_size[0], image_size[1], 3))
+        data_list.append(data)
+    for i in range(len(issame_list)*2):
+        _bin = bins[i]
+        img = mx.image.imdecode(_bin).asnumpy()
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        for flip in [0,1]:
+            if flip == 1:
+                img = np.fliplr(img)
+            data_list[flip][i, ...] = img
+        i += 1
+        if i % 1000 == 0:
+            print('loading bin', i)
+    print(data_list[0].shape)
+    return data_list, issame_list
+
+
+def load_eval_datasets(db_name, args):
+    # bins, issame_list = pickle.load(open(os.path.join(args.eval_db_path, db_name+'.bin'), 'rb'), encoding='bytes')
+    lfw_paths, actual_issame = get_paths(args)
+    data_list = []
+    for _ in [0,1]:
+        data = np.empty((len(issame_list)*2, args.image_size[0], args.image_size[1], 3))
         data_list.append(data)
     for i in range(len(issame_list)*2):
         _bin = bins[i]

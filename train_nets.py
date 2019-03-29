@@ -1,51 +1,86 @@
 import tensorflow as tf
 import tensorlayer as tl
-import argparse
-from data.mx2tfrecords import parse_function
+# import argparse
+# from data.mx2tfrecords import parse_function, mr_parse_function
 import os
+from os.path import join
 # from nets.L_Resnet_E_IR import get_resnet
 # from nets.L_Resnet_E_IR_GBN import get_resnet
-from nets.L_Resnet_E_IR_fix_issue9 import get_resnet
-from losses.face_losses import arcface_loss
+# from nets.L_Resnet_E_IR_fix_issue9 import get_resnet
+# from losses.face_losses import arcface_loss
 from tensorflow.core.protobuf import config_pb2
 import time
-from data.eval_data_reader import load_bin
-from verification import ver_test
+# from data.eval_data_reader import load_bin
+# from verification import ver_test
 
 
-def get_parser():
-    parser = argparse.ArgumentParser(description='parameters to train net')
-    parser.add_argument('--net_depth', default=100, help='resnet depth, default is 50')
-    parser.add_argument('--epoch', default=100000, help='epoch to train the network')
-    parser.add_argument('--batch_size', default=32, help='batch size to train network')
-    parser.add_argument('--lr_steps', default=[40000, 60000, 80000], help='learning rate to train network')
-    parser.add_argument('--momentum', default=0.9, help='learning alg momentum')
-    parser.add_argument('--weight_deacy', default=5e-4, help='learning alg momentum')
-    # parser.add_argument('--eval_datasets', default=['lfw', 'cfp_ff', 'cfp_fp', 'agedb_30'], help='evluation datasets')
-    parser.add_argument('--eval_datasets', default=['lfw'], help='evluation datasets')
-    parser.add_argument('--eval_db_path', default='./datasets/faces_ms1m_112x112', help='evluate datasets base path')
-    parser.add_argument('--image_size', default=[112, 112], help='the image size')
-    parser.add_argument('--num_output', default=85164, help='the image size')
-    parser.add_argument('--tfrecords_file_path', default='./datasets/tfrecords', type=str,
-                        help='path to the output of tfrecords file path')
-    parser.add_argument('--summary_path', default='./output/summary', help='the summary file save path')
-    parser.add_argument('--ckpt_path', default='./output/ckpt', help='the ckpt file save path')
-    parser.add_argument('--log_file_path', default='./output/logs', help='the ckpt file save path')
-    parser.add_argument('--saver_maxkeep', default=100, help='tf.train.Saver max keep ckpt files')
-    parser.add_argument('--buffer_size', default=10000, help='tf dataset api buffer size')
-    parser.add_argument('--log_device_mapping', default=False, help='show device placement log')
-    parser.add_argument('--summary_interval', default=300, help='interval to save summary')
-    parser.add_argument('--ckpt_interval', default=10000, help='intervals to save ckpt file')
-    parser.add_argument('--validate_interval', default=2000, help='intervals to save ckpt file')
-    parser.add_argument('--show_info_interval', default=20, help='intervals to save ckpt file')
-    args = parser.parse_args()
-    return args
+PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
+
+log_path = os.path.join(PROJECT_PATH, 'output')
+models_path = os.path.join(PROJECT_PATH, 'models')
+# train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\1024First_lfw_160'
+train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_train'
+lfw_dir_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_test_Copy'
+lfw_pairs_path = os.path.join(PROJECT_PATH, 'data/pairs.txt')
+
+# train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200_lfw_192'
+# learning_rate_schedule_decay_path = os.path.join(PROJECT_PATH, 'data/learning_rate_schedule_classifier_casia.txt')
+# lfw_pairs_path = os.path.join(PROJECT_PATH, 'data/pairs.txt')
+print(PROJECT_PATH)
+print(log_path)
+print(models_path)
+print(train_dataset_path)
+# print(learning_rate_schedule_decay_path)
+
+from importlib.machinery import SourceFileLoader
+facenet = SourceFileLoader('facenet', os.path.join(PROJECT_PATH, 'facenet.py')).load_module()
+lfw = SourceFileLoader('lfw', os.path.join(PROJECT_PATH, 'lfw.py')).load_module()
+mx2tfrecords = SourceFileLoader('mx2tfrecords', os.path.join(PROJECT_PATH, 'data/mx2tfrecords.py')).load_module()
+
+L_Resnet_E_IR_fix_issue9 = SourceFileLoader('L_Resnet_E_IR_fix_issue9', os.path.join(PROJECT_PATH, 'nets/L_Resnet_E_IR_fix_issue9.py')).load_module()
+
+face_losses = SourceFileLoader('face_losses', os.path.join(PROJECT_PATH, 'losses/face_losses.py')).load_module()
+eval_data_reader = SourceFileLoader('eval_data_reader', os.path.join(PROJECT_PATH, 'data/eval_data_reader.py')).load_module()
+verification = SourceFileLoader('verification', os.path.join(PROJECT_PATH, 'verification.py')).load_module()
+
+class Args:
+    # net_depth = 100
+    net_depth = 50
+    epoch = 1000
+    batch_size = 32
+    lr_steps = [40000, 60000, 80000]
+    momentum = 0.9
+    weight_deacy = 5e-4
+    eval_datasets = [lfw_dir_path]
+    eval_pair = lfw_pairs_path
+    eval_db_path = './datasets/faces_ms1m_112x112'
+    # image_size = [112, 112]
+    image_size = [160, 160]
+    num_output = 85164
+    tfrecords_file_path = './datasets/tfrecords'
+    train_dataset_dir = train_dataset_path
+    # summary_path = './output/summary'
+    summary_path = join(log_path, 'summary')
+    # ckpt_path = './output/ckpt'
+    ckpt_path = join(log_path, 'ckpt')
+    # log_file_path = './output/logs'
+    log_file_path = join(log_path, 'logs')
+    saver_maxkeep = 100
+    buffer_size = 10000
+    log_device_mapping = False
+    summary_interval = 300
+    ckpt_interval = 10000
+    validate_interval = 1
+    show_info_interval = 1
+    seed = 313
+    nrof_preprocess_threads = 4
 
 
 if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     # 1. define global parameters
-    args = get_parser()
+    # args = get_parser()
+    args = Args()
     global_step = tf.Variable(name='global_step', initial_value=0, trainable=False)
     inc_op = tf.assign_add(global_step, 1, name='increment_global_step')
     images = tf.placeholder(name='img_inputs', shape=[None, *args.image_size, 3], dtype=tf.float32)
@@ -56,30 +91,65 @@ if __name__ == '__main__':
     # 2.1 train datasets
     # the image is substracted 127.5 and multiplied 1/128.
     # random flip left right
-    tfrecords_f = os.path.join(args.tfrecords_file_path, 'tran.tfrecords')
-    dataset = tf.data.TFRecordDataset(tfrecords_f)
-    dataset = dataset.map(parse_function)
-    dataset = dataset.shuffle(buffer_size=args.buffer_size)
-    dataset = dataset.batch(args.batch_size)
-    iterator = dataset.make_initializable_iterator()
-    next_element = iterator.get_next()
+
+    # Creating dataset batch by tf.data
+    mr_dataset = facenet.get_dataset(args.train_dataset_dir, nrof_preprocess_threads=args.nrof_preprocess_threads)
+
+    # Get a list of image paths and their labels
+    image_list, _label_list, name_dict, index_dict = facenet.get_image_paths_and_labels(mr_dataset, path=args.train_dataset_dir)
+
+    label_list = []
+    for path in image_list:
+        label_list.append(int(name_dict[path.split('\\')[len(args.train_dataset_dir.split('\\'))]]))
+    # Making dataset from image path's
+
+    tf_dataset_train = tf.data.Dataset.from_tensor_slices((image_list, label_list))
+    # Now create a new dataset that loads and formats images on the fly by mapping preprocess_image over the dataset of paths.
+    image_label_ds = tf_dataset_train.map(lambda image_path, label: mx2tfrecords.mr_parse_function(image_path, label=label,
+                                                                                                   image_size=args.image_size[0],
+                                                                                seed=args.seed, normalize=False, do_resize=False,
+                                                                                do_random_crop=False, do_random_flip_up_down=False,
+                                                                                do_random_flip_left_right=True),
+                            num_parallel_calls=args.nrof_preprocess_threads)
+
+    print('::::::::::::::::::::::::::::::::in memory cache::::::::::::::::::::::::::::::::')
+    tf_dataset_train = image_label_ds.cache()
+    image_count = len(image_list)
+    repeat_count = 1
+    tf_dataset_train = tf_dataset_train.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=args.seed))
+    tf_dataset_train = tf_dataset_train.batch(args.batch_size).prefetch(buffer_size=args.nrof_preprocess_threads)
+
+    train_iterator = tf_dataset_train.make_initializable_iterator()
+    train_next_element = train_iterator.get_next()
+
+    # tfrecords_f = os.path.join(args.tfrecords_file_path, 'tran.tfrecords')
+    # dataset = tf.data.TFRecordDataset(tfrecords_f)
+    # dataset = dataset.map(parse_function)
+    # dataset = dataset.shuffle(buffer_size=args.buffer_size)
+    # dataset = dataset.batch(args.batch_size)
+    # iterator = dataset.make_initializable_iterator()
+    # next_element = iterator.get_next()
+
     # 2.2 prepare validate datasets
     ver_list = []
     ver_name_list = []
     for db in args.eval_datasets:
         print('begin db %s convert.' % db)
-        data_set = load_bin(db, args.image_size, args)
+        # data_set = eval_data_reader.load_bin(db, args.image_size, args)
+        data_set = eval_data_reader.load_eval_datasets(db, args)
         ver_list.append(data_set)
         ver_name_list.append(db)
+
     # 3. define network, loss, optimize method, learning rate schedule, summary writer, saver
     # 3.1 inference phase
     w_init_method = tf.contrib.layers.xavier_initializer(uniform=False)
-    net = get_resnet(images, args.net_depth, type='ir', w_init=w_init_method, trainable=True, keep_rate=dropout_rate)
+    net = L_Resnet_E_IR_fix_issue9.get_resnet(images, args.net_depth, type='ir', w_init=w_init_method, trainable=True, keep_rate=dropout_rate)
     # 3.2 get arcface loss
-    logit = arcface_loss(embedding=net.outputs, labels=labels, w_init=w_init_method, out_num=args.num_output)
+    logit = face_losses.arcface_loss(embedding=net.outputs, labels=labels, w_init=w_init_method, out_num=args.num_output)
     # test net  because of batch normal layer
     tl.layers.set_name_reuse(True)
-    test_net = get_resnet(images, args.net_depth, type='ir', w_init=w_init_method, trainable=False, reuse=True, keep_rate=dropout_rate)
+    test_net = L_Resnet_E_IR_fix_issue9.get_resnet(images, args.net_depth, type='ir', w_init=w_init_method, trainable=False, reuse=True,
+                                                   keep_rate=dropout_rate)
     embedding_tensor = test_net.outputs
     # 3.3 define the cross entropy
     inference_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logit, labels=labels))
@@ -161,10 +231,13 @@ if __name__ == '__main__':
     total_accuracy = {}
 
     for i in range(args.epoch):
-        sess.run(iterator.initializer)
+        # sess.run(iterator.initializer)
+        # Initialize train dataset
+        sess.run(train_iterator.initializer)
         while True:
             try:
-                images_train, labels_train = sess.run(next_element)
+                # images_train, labels_train = sess.run(next_element)
+                images_train, labels_train = sess.run(train_next_element)
                 feed_dict = {images: images_train, labels: labels_train, dropout_rate: 0.4}
                 feed_dict.update(net.all_drop)
                 start = time.time()
@@ -198,7 +271,7 @@ if __name__ == '__main__':
                 if count > 0 and count % args.validate_interval == 0:
                     feed_dict_test ={dropout_rate: 1.0}
                     feed_dict_test.update(tl.utils.dict_to_one(net.all_drop))
-                    results = ver_test(ver_list=ver_list, ver_name_list=ver_name_list, nbatch=count, sess=sess,
+                    results = verification.ver_test(ver_list=ver_list, ver_name_list=ver_name_list, nbatch=count, sess=sess,
                              embedding_tensor=embedding_tensor, batch_size=args.batch_size, feed_dict=feed_dict_test,
                              input_placeholder=images)
                     print('test accuracy is: ', str(results[0]))
