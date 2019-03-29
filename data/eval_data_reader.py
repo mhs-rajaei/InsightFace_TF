@@ -9,6 +9,7 @@ import io
 import PIL.Image
 import mxnet.ndarray as nd
 from pprint import pprint
+from scipy import misc
 
 
 def get_parser():
@@ -46,7 +47,7 @@ def read_pairs(pairs_filename):
         for line in f.readlines()[1:]:
             pair = line.strip().split()
             # print(line)
-            pprint(pair)
+            # pprint(pair)
             if pair not in pairs:
                 pairs.append(pair)
     # pairs = remove_duplicates(pairs)
@@ -111,7 +112,7 @@ def load_bin(path, image_size):
             data_list[flip][i][:] = img_cv
         i += 1
         if i % 1000 == 0:
-            print('loading bin', i)
+            print('loading images', i)
     print(data_list[0].shape)
     return data_list, issame_list
 
@@ -194,24 +195,27 @@ def load_bin(db_name, image_size, args):
 
 def load_eval_datasets(args):
     # bins, issame_list = pickle.load(open(os.path.join(args.eval_db_path, db_name+'.bin'), 'rb'), encoding='bytes')
-    lfw_paths, actual_issame = get_paths(args)
-    data_list = []
-    for _ in [0,1]:
-        data = np.empty((len(issame_list)*2, args.image_size[0], args.image_size[1], 3))
-        data_list.append(data)
+    image_path_list, issame_list = get_paths(args)
+    # data_list = []
+    data = np.zeros((2, len(issame_list)*2, args.image_size[0], args.image_size[1], 3), dtype=np.float32)
+    # for _ in [0,1]:
+    #     data = np.zeros((len(issame_list)*2, args.image_size[0], args.image_size[1], 3), dtype=np.float32)
+    #     data_list.append(data)
     for i in range(len(issame_list)*2):
-        _bin = bins[i]
-        img = mx.image.imdecode(_bin).asnumpy()
+        _bin = image_path_list[i]
+        # img = mx.image.imdecode(_bin).asnumpy()
+        img = misc.imread(_bin)
+        # img = mx.image.imdecode(img).asnumpy()
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        for flip in [0,1]:
+        for flip in [0, 1]:
             if flip == 1:
                 img = np.fliplr(img)
-            data_list[flip][i, ...] = img
+            data[flip][i, ...] = img
         i += 1
         if i % 1000 == 0:
             print('loading bin', i)
-    print(data_list[0].shape)
-    return data_list, issame_list
+    print(data.shape)
+    return data, issame_list
 
 
 if __name__ == '__main__':

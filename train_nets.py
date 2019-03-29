@@ -4,12 +4,14 @@ import tensorlayer as tl
 # from data.mx2tfrecords import parse_function, mr_parse_function
 import os
 from os.path import join
+import numpy as np
 # from nets.L_Resnet_E_IR import get_resnet
 # from nets.L_Resnet_E_IR_GBN import get_resnet
 # from nets.L_Resnet_E_IR_fix_issue9 import get_resnet
 # from losses.face_losses import arcface_loss
 from tensorflow.core.protobuf import config_pb2
 import time
+import matplotlib.pyplot as plt
 # from data.eval_data_reader import load_bin
 # from verification import ver_test
 
@@ -43,6 +45,7 @@ face_losses = SourceFileLoader('face_losses', os.path.join(PROJECT_PATH, 'losses
 eval_data_reader = SourceFileLoader('eval_data_reader', os.path.join(PROJECT_PATH, 'data/eval_data_reader.py')).load_module()
 verification = SourceFileLoader('verification', os.path.join(PROJECT_PATH, 'verification.py')).load_module()
 
+
 class Args:
     # net_depth = 100
     net_depth = 50
@@ -74,6 +77,81 @@ class Args:
     show_info_interval = 1
     seed = 313
     nrof_preprocess_threads = 4
+
+def test_pre_train_model():
+    verification_threshhold = 1.188
+    image_size = 160
+    # v = ftk.Verification()
+    v = None
+    # Pre-load model for Verification
+    v.load_model("./models/20180204-160909/")
+    v.initial_input_output_tensors()
+
+    database = {}
+
+    database["alireza"] = img_to_encoding("./images/alireza.jpg")
+    database["ali"] = img_to_encoding("./images/ali.jpg")
+    database["mohsen"] = img_to_encoding("./images/mohsen.jpg")
+    database["muhammad"] = img_to_encoding("./images/muhammad.jpg")
+
+    verify("images/1.jpg", "alireza", database)
+    verify("images/ali.jpg", "alireza", database)
+
+    who_is_it("images/alireza-in-part.jpg", database)
+
+    who_is_it("images/m.jpg", database)
+
+
+def who_is_it(image_path, database):
+    ## Step 1: Compute the target "encoding" for the image. Use img_to_encoding()
+    encoding = img_to_encoding(image_path)
+
+    ## Step 2: Find the closest encoding ##
+
+    # Initialize "min_dist" to a large value, say 100
+    min_dist = 1000
+    # Loop over the database dictionary's names and encodings.
+    for (name, db_enc) in database.items():
+        # Compute L2 distance between the target "encoding" and the current "emb" from the database. (≈ 1 line)
+        dist = distance(encoding, db_enc)
+
+        # If this distance is less than the min_dist, then set min_dist to dist, and identity to name. (≈ 3 lines)
+        if min_dist > dist:
+            min_dist = dist
+            identity = name
+    verification_threshhold = 2
+    if min_dist > verification_threshhold:
+        print("Not in the database.")
+    else:
+        print("it's " + str(identity) + ", the distance is " + str(min_dist))
+
+    return min_dist, identity
+
+
+def distance(emb1, emb2):
+    diff = np.subtract(emb1, emb2)
+    return np.sum(np.square(diff))
+
+
+def verify(image_path, identity, database):
+    # Step 1: Compute the encoding for the image. Use img_to_encoding()
+    encoding = img_to_encoding(image_path)
+
+    # Step 2: Compute distance with identity's image
+    dist = distance(encoding, database[identity])
+    verification_threshhold = 2
+    # Step 3: Open the door if dist < verification_threshhold, else don't open
+    if dist < verification_threshhold:
+        print("It's " + str(identity) + ", welcome!")
+    else:
+        print("It's not " + str(identity) + ", please go away")
+
+    return dist
+
+def img_to_encoding(img):
+    image = plt.imread(img)
+    # aligned = d.align(image, False)[0]
+    # return v.img_to_encoding(aligned, image_size)
 
 
 if __name__ == '__main__':
@@ -136,6 +214,7 @@ if __name__ == '__main__':
     # for db in args.eval_datasets:
     print('begin db %s convert.' % args.eval_datasets)
     # data_set = eval_data_reader.load_bin(db, args.image_size, args)
+    # image_array, actual_issame = eval_data_reader.load_eval_datasets(args)
     data_set = eval_data_reader.load_eval_datasets(args)
     ver_list.append(data_set)
     ver_name_list.append(args.eval_datasets)
