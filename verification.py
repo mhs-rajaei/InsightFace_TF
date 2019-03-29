@@ -156,13 +156,13 @@ def calculate_val_far(threshold, dist, actual_issame):
         val = float(true_accept) / float(n_same)
     else:
         val = 0.0
-        print('Warning: float(n_same) equal to zero')
+        # print('Info: float(n_same) equal to zero')
 
     if float(n_diff) != 0.0:
         far = float(false_accept) / float(n_diff)
     else:
         far = 0.0
-        print('Warning: float(n_diff) equal to zero')
+        # print('Info: float(n_diff) equal to zero')
     return val, far
 
 

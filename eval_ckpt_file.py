@@ -11,8 +11,8 @@ def get_args():
     parser = argparse.ArgumentParser(description='input information')
     parser.add_argument('--ckpt_file', default='/home/aurora/workspaces2018/InsightFace_TF/output/ckpt_model_c/InsightFace_iter_best_',
                        type=str, help='the ckpt file path')
-    # parser.add_argument('--eval_datasets', default=['lfw', 'cfp_ff', 'cfp_fp', 'agedb_30'], help='evluation datasets')
-    parser.add_argument('--eval_datasets', default=['agedb_30'], help='evluation datasets')
+    # parser.add_argument('--eval_dataset', default=['lfw', 'cfp_ff', 'cfp_fp', 'agedb_30'], help='evluation datasets')
+    parser.add_argument('--eval_dataset', default=['agedb_30'], help='evluation datasets')
     parser.add_argument('--eval_db_path', default='./datasets/faces_ms1m_112x112', help='evluate datasets base path')
     parser.add_argument('--image_size', default=[112, 112], help='the image size')
     parser.add_argument('--net_depth', default=50, help='resnet depth, default is 50')

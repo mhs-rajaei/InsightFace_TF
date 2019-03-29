@@ -1,0 +1,192 @@
+Vincent_Brooks	7	1
+Vincent_Brooks	7	1
+Vincent_Brooks	1	1
+Vladimir_Putin	23	42
+Vladimir_Putin	22	6
+Vladimir_Putin	42	39
+Vojislav_Kostunica	7	7
+Vojislav_Kostunica	7	1
+Vojislav_Kostunica	7	7
+Vytas_Danelius	1	1
+Vytas_Danelius	1	1
+Vytas_Danelius	1	1
+Walter_Mondale	6	9
+Walter_Mondale	6	7
+Walter_Mondale	9	8
+Wayne_Ferreira	5	5
+Wayne_Ferreira	5	5
+Wayne_Ferreira	5	5
+Wayne_Gretzky	4	4
+Wayne_Gretzky	4	4
+Wayne_Gretzky	4	4
+Wen_Jiabao	12	13
+Wen_Jiabao	9	7
+Wen_Jiabao	12	13
+William_Bulger	4	4
+William_Bulger	4	4
+William_Bulger	4	4
+William_Donaldson	7	6
+William_Donaldson	6	5
+William_Donaldson	7	6
+William_Ford_Jr	6	5
+William_Ford_Jr	6	7
+William_Ford_Jr	5	6
+William_Hochul	1	1
+William_Hochul	1	2
+William_Hochul	2	2
+Winona_Ryder	19	14
+Winona_Ryder	16	24
+Winona_Ryder	22	13
+Win_Aung	4	4
+Win_Aung	4	4
+Win_Aung	4	4
+Wolfgang_Schuessel	4	4
+Wolfgang_Schuessel	4	4
+Wolfgang_Schuessel	4	4
+Woody_Allen	4	4
+Woody_Allen	4	4
+Woody_Allen	4	4
+Xanana_Gusmao	5	5
+Xanana_Gusmao	5	5
+Xanana_Gusmao	5	5
+Xavier_Malisse	5	5
+Xavier_Malisse	5	5
+Xavier_Malisse	5	5
+Yang_Hee_Kim	1	1
+Yang_Hee_Kim	1	1
+Yang_Hee_Kim	1	1
+Yao_Ming	6	8
+Yao_Ming	5	7
+Yao_Ming	7	8
+Yasar_Yakis	4	4
+Yasar_Yakis	4	4
+Yasar_Yakis	4	4
+Yashwant_Sinha	5	5
+Yashwant_Sinha	5	6
+Yashwant_Sinha	6	6
+Yasser_Arafat	7	6
+Yasser_Arafat	8	6
+Yasser_Arafat	8	5
+Yevgeny_Kafelnikov	2	2
+Yevgeny_Kafelnikov	2	2
+Yevgeny_Kafelnikov	2	2
+Yoko_Ono	5	6
+Yoko_Ono	6	6
+Yoko_Ono	5	5
+Yoriko_Kawaguchi	8	11
+Yoriko_Kawaguchi	10	13
+Yoriko_Kawaguchi	14	14
+Yossi_Beilin	1	1
+Yossi_Beilin	1	1
+Yossi_Beilin	1	1
+Yu_Shyi-kun	3	3
+Yu_Shyi-kun	3	3
+Yu_Shyi-kun	3	3
+Zhang_Ziyi	4	4
+Zhang_Ziyi	4	4
+Zhang_Ziyi	4	4
+Zhu_Rongji	6	6
+Zhu_Rongji	7	5
+Zhu_Rongji	5	7
+Zinedine_Zidane	6	5
+Zinedine_Zidane	5	6
+Zinedine_Zidane	5	5
+Zoran_Djindjic	4	4
+Zoran_Djindjic	4	4
+Zoran_Djindjic	4	4
+Vincent_Brooks	7	Zoran_Djindjic	4
+Vincent_Brooks	7	Zoran_Djindjic	4
+Vincent_Brooks	7	Zoran_Djindjic	4
+Vladimir_Putin	11	Yu_Shyi-kun	3
+Vladimir_Putin	22	Yu_Shyi-kun	3
+Vladimir_Putin	29	Yu_Shyi-kun	3
+Vojislav_Kostunica	1	Wayne_Ferreira	5
+Vojislav_Kostunica	1	Wayne_Ferreira	5
+Vojislav_Kostunica	1	Wayne_Ferreira	5
+Vytas_Danelius	1	Xanana_Gusmao	5
+Vytas_Danelius	1	Xanana_Gusmao	5
+Vytas_Danelius	1	Xanana_Gusmao	5
+Walter_Mondale	6	Yossi_Beilin	1
+Walter_Mondale	6	Yossi_Beilin	1
+Walter_Mondale	9	Yossi_Beilin	1
+Wayne_Ferreira	5	Winona_Ryder	22
+Wayne_Ferreira	5	Winona_Ryder	6
+Wayne_Ferreira	5	Winona_Ryder	21
+Wayne_Gretzky	4	Yossi_Beilin	1
+Wayne_Gretzky	4	Yossi_Beilin	1
+Wayne_Gretzky	4	Yossi_Beilin	1
+Wen_Jiabao	6	Yasar_Yakis	4
+Wen_Jiabao	7	Yasar_Yakis	4
+Wen_Jiabao	12	Yasar_Yakis	4
+William_Bulger	4	Zhu_Rongji	7
+William_Bulger	4	Zhu_Rongji	7
+William_Bulger	4	Zhu_Rongji	6
+William_Donaldson	5	Vladimir_Putin	22
+William_Donaldson	7	Vladimir_Putin	32
+William_Donaldson	6	Vladimir_Putin	38
+William_Ford_Jr	6	Vladimir_Putin	19
+William_Ford_Jr	7	Vladimir_Putin	6
+William_Ford_Jr	6	Vladimir_Putin	34
+William_Hochul	1	Yashwant_Sinha	6
+William_Hochul	1	Yashwant_Sinha	5
+William_Hochul	1	Yashwant_Sinha	7
+Winona_Ryder	14	William_Ford_Jr	7
+Winona_Ryder	20	William_Ford_Jr	6
+Winona_Ryder	23	William_Ford_Jr	5
+Win_Aung	4	Yoko_Ono	5
+Win_Aung	4	Yoko_Ono	5
+Win_Aung	4	Yoko_Ono	6
+Wolfgang_Schuessel	4	Xanana_Gusmao	5
+Wolfgang_Schuessel	4	Xanana_Gusmao	5
+Wolfgang_Schuessel	4	Xanana_Gusmao	5
+Woody_Allen	4	Woody_Allen	4
+Woody_Allen	4	Woody_Allen	4
+Woody_Allen	4	Woody_Allen	4
+Xanana_Gusmao	5	William_Donaldson	7
+Xanana_Gusmao	5	William_Donaldson	7
+Xanana_Gusmao	5	William_Donaldson	6
+Xavier_Malisse	5	Xavier_Malisse	5
+Xavier_Malisse	5	Xavier_Malisse	5
+Xavier_Malisse	5	Xavier_Malisse	5
+Yang_Hee_Kim	1	Yashwant_Sinha	6
+Yang_Hee_Kim	1	Yashwant_Sinha	5
+Yang_Hee_Kim	1	Yashwant_Sinha	6
+Yao_Ming	7	Yoko_Ono	6
+Yao_Ming	7	Yoko_Ono	6
+Yao_Ming	7	Yoko_Ono	6
+Yasar_Yakis	4	Yossi_Beilin	1
+Yasar_Yakis	4	Yossi_Beilin	1
+Yasar_Yakis	4	Yossi_Beilin	1
+Yashwant_Sinha	5	Yasar_Yakis	4
+Yashwant_Sinha	7	Yasar_Yakis	4
+Yashwant_Sinha	7	Yasar_Yakis	4
+Yasser_Arafat	5	Vojislav_Kostunica	1
+Yasser_Arafat	8	Vojislav_Kostunica	7
+Yasser_Arafat	6	Vojislav_Kostunica	1
+Yevgeny_Kafelnikov	2	Zhang_Ziyi	4
+Yevgeny_Kafelnikov	2	Zhang_Ziyi	4
+Yevgeny_Kafelnikov	2	Zhang_Ziyi	4
+Yoko_Ono	5	Xanana_Gusmao	5
+Yoko_Ono	5	Xanana_Gusmao	5
+Yoko_Ono	5	Xanana_Gusmao	5
+Yoriko_Kawaguchi	6	Vladimir_Putin	13
+Yoriko_Kawaguchi	8	Vladimir_Putin	33
+Yoriko_Kawaguchi	8	Vladimir_Putin	16
+Yossi_Beilin	1	Zoran_Djindjic	4
+Yossi_Beilin	1	Zoran_Djindjic	4
+Yossi_Beilin	1	Zoran_Djindjic	4
+Yu_Shyi-kun	3	Yasser_Arafat	5
+Yu_Shyi-kun	3	Yasser_Arafat	5
+Yu_Shyi-kun	3	Yasser_Arafat	6
+Zhang_Ziyi	4	Vytas_Danelius	1
+Zhang_Ziyi	4	Vytas_Danelius	1
+Zhang_Ziyi	4	Vytas_Danelius	1
+Zhu_Rongji	7	Vojislav_Kostunica	1
+Zhu_Rongji	6	Vojislav_Kostunica	1
+Zhu_Rongji	6	Vojislav_Kostunica	7
+Zinedine_Zidane	6	Vladimir_Putin	11
+Zinedine_Zidane	5	Vladimir_Putin	45
+Zinedine_Zidane	6	Vladimir_Putin	27
+Zoran_Djindjic	4	Vojislav_Kostunica	1
+Zoran_Djindjic	4	Vojislav_Kostunica	7
+Zoran_Djindjic	4	Vojislav_Kostunica	1

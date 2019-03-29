@@ -1,20 +1,9 @@
 import tensorflow as tf
 import tensorlayer as tl
-# import argparse
-# from data.mx2tfrecords import parse_function, mr_parse_function
 import os
 from os.path import join
-import numpy as np
-# from nets.L_Resnet_E_IR import get_resnet
-# from nets.L_Resnet_E_IR_GBN import get_resnet
-# from nets.L_Resnet_E_IR_fix_issue9 import get_resnet
-# from losses.face_losses import arcface_loss
 from tensorflow.core.protobuf import config_pb2
 import time
-import matplotlib.pyplot as plt
-# from data.eval_data_reader import load_bin
-# from verification import ver_test
-
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -22,21 +11,16 @@ log_path = os.path.join(PROJECT_PATH, 'output')
 models_path = os.path.join(PROJECT_PATH, 'models')
 # train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\1024First_lfw_160'
 train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_train'
-lfw_dir_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_test_Copy'
-lfw_pairs_path = os.path.join(PROJECT_PATH, 'data/pairs.txt')
+eval_dir_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_test_Copy'
+eval_pairs_path = os.path.join(PROJECT_PATH, 'data/pairs.txt')
 
-# train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200_lfw_192'
-# learning_rate_schedule_decay_path = os.path.join(PROJECT_PATH, 'data/learning_rate_schedule_classifier_casia.txt')
-# lfw_pairs_path = os.path.join(PROJECT_PATH, 'data/pairs.txt')
 print(PROJECT_PATH)
 print(log_path)
 print(models_path)
 print(train_dataset_path)
-# print(learning_rate_schedule_decay_path)
 
 from importlib.machinery import SourceFileLoader
 facenet = SourceFileLoader('facenet', os.path.join(PROJECT_PATH, 'facenet.py')).load_module()
-lfw = SourceFileLoader('lfw', os.path.join(PROJECT_PATH, 'lfw.py')).load_module()
 mx2tfrecords = SourceFileLoader('mx2tfrecords', os.path.join(PROJECT_PATH, 'data/mx2tfrecords.py')).load_module()
 
 L_Resnet_E_IR_fix_issue9 = SourceFileLoader('L_Resnet_E_IR_fix_issue9', os.path.join(PROJECT_PATH, 'nets/L_Resnet_E_IR_fix_issue9.py')).load_module()
@@ -47,117 +31,39 @@ verification = SourceFileLoader('verification', os.path.join(PROJECT_PATH, 'veri
 
 
 class Args:
-    # net_depth = 100
     net_depth = 50
     epoch = 1000
     batch_size = 32
     lr_steps = [40000, 60000, 80000]
     momentum = 0.9
-    weight_deacy = 5e-4
-    eval_datasets = lfw_dir_path
-    eval_pair = lfw_pairs_path
-    eval_db_path = './datasets/faces_ms1m_112x112'
-    # image_size = [112, 112]
+    weight_decay = 5e-4
+
+    eval_dataset = eval_dir_path
+    eval_pair = eval_pairs_path
+
     image_size = [160, 160]
-    num_output = 85164
-    tfrecords_file_path = './datasets/tfrecords'
+    num_output = 85164  # ?
+
     train_dataset_dir = train_dataset_path
-    # summary_path = './output/summary'
     summary_path = join(log_path, 'summary')
-    # ckpt_path = './output/ckpt'
     ckpt_path = join(log_path, 'ckpt')
-    # log_file_path = './output/logs'
     log_file_path = join(log_path, 'logs')
-    saver_maxkeep = 100
+
+    saver_maxkeep = 10
     buffer_size = 10000
     log_device_mapping = False
-    summary_interval = 300
-    ckpt_interval = 10000
-    validate_interval = 1
-    show_info_interval = 1
+    summary_interval = 1
+    ckpt_interval = 100
+    validate_interval = 50
+    show_info_interval = 10
     seed = 313
     nrof_preprocess_threads = 4
-
-def test_pre_train_model():
-    verification_threshhold = 1.188
-    image_size = 160
-    # v = ftk.Verification()
-    v = None
-    # Pre-load model for Verification
-    v.load_model("./models/20180204-160909/")
-    v.initial_input_output_tensors()
-
-    database = {}
-
-    database["alireza"] = img_to_encoding("./images/alireza.jpg")
-    database["ali"] = img_to_encoding("./images/ali.jpg")
-    database["mohsen"] = img_to_encoding("./images/mohsen.jpg")
-    database["muhammad"] = img_to_encoding("./images/muhammad.jpg")
-
-    verify("images/1.jpg", "alireza", database)
-    verify("images/ali.jpg", "alireza", database)
-
-    who_is_it("images/alireza-in-part.jpg", database)
-
-    who_is_it("images/m.jpg", database)
-
-
-def who_is_it(image_path, database):
-    ## Step 1: Compute the target "encoding" for the image. Use img_to_encoding()
-    encoding = img_to_encoding(image_path)
-
-    ## Step 2: Find the closest encoding ##
-
-    # Initialize "min_dist" to a large value, say 100
-    min_dist = 1000
-    # Loop over the database dictionary's names and encodings.
-    for (name, db_enc) in database.items():
-        # Compute L2 distance between the target "encoding" and the current "emb" from the database. (≈ 1 line)
-        dist = distance(encoding, db_enc)
-
-        # If this distance is less than the min_dist, then set min_dist to dist, and identity to name. (≈ 3 lines)
-        if min_dist > dist:
-            min_dist = dist
-            identity = name
-    verification_threshhold = 2
-    if min_dist > verification_threshhold:
-        print("Not in the database.")
-    else:
-        print("it's " + str(identity) + ", the distance is " + str(min_dist))
-
-    return min_dist, identity
-
-
-def distance(emb1, emb2):
-    diff = np.subtract(emb1, emb2)
-    return np.sum(np.square(diff))
-
-
-def verify(image_path, identity, database):
-    # Step 1: Compute the encoding for the image. Use img_to_encoding()
-    encoding = img_to_encoding(image_path)
-
-    # Step 2: Compute distance with identity's image
-    dist = distance(encoding, database[identity])
-    verification_threshhold = 2
-    # Step 3: Open the door if dist < verification_threshhold, else don't open
-    if dist < verification_threshhold:
-        print("It's " + str(identity) + ", welcome!")
-    else:
-        print("It's not " + str(identity) + ", please go away")
-
-    return dist
-
-def img_to_encoding(img):
-    image = plt.imread(img)
-    # aligned = d.align(image, False)[0]
-    # return v.img_to_encoding(aligned, image_size)
 
 
 if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     # 1. define global parameters
-    # args = get_parser()
+    # Hyper parameters
     args = Args()
     global_step = tf.Variable(name='global_step', initial_value=0, trainable=False)
     inc_op = tf.assign_add(global_step, 1, name='increment_global_step')
@@ -174,13 +80,9 @@ if __name__ == '__main__':
     mr_dataset = facenet.get_dataset(args.train_dataset_dir, nrof_preprocess_threads=args.nrof_preprocess_threads)
 
     # Get a list of image paths and their labels
-    image_list, _label_list, name_dict, index_dict = facenet.get_image_paths_and_labels(mr_dataset, path=args.train_dataset_dir)
+    image_list, label_list = facenet.get_image_paths_and_labels(mr_dataset)
 
-    label_list = []
-    for path in image_list:
-        label_list.append(int(name_dict[path.split('\\')[len(args.train_dataset_dir.split('\\'))]]))
     # Making dataset from image path's
-
     tf_dataset_train = tf.data.Dataset.from_tensor_slices((image_list, label_list))
     # Now create a new dataset that loads and formats images on the fly by mapping preprocess_image over the dataset of paths.
     image_label_ds = tf_dataset_train.map(lambda image_path, label: mx2tfrecords.mr_parse_function(image_path, label=label,
@@ -190,7 +92,7 @@ if __name__ == '__main__':
                                                                                 do_random_flip_left_right=True),
                             num_parallel_calls=args.nrof_preprocess_threads)
 
-    print('::::::::::::::::::::::::::::::::in memory cache::::::::::::::::::::::::::::::::')
+    print(':::::::::::::::::::::::::::::::: In Memory Cache ::::::::::::::::::::::::::::::::')
     tf_dataset_train = image_label_ds.cache()
     image_count = len(image_list)
     repeat_count = 1
@@ -200,24 +102,15 @@ if __name__ == '__main__':
     train_iterator = tf_dataset_train.make_initializable_iterator()
     train_next_element = train_iterator.get_next()
 
-    # tfrecords_f = os.path.join(args.tfrecords_file_path, 'tran.tfrecords')
-    # dataset = tf.data.TFRecordDataset(tfrecords_f)
-    # dataset = dataset.map(parse_function)
-    # dataset = dataset.shuffle(buffer_size=args.buffer_size)
-    # dataset = dataset.batch(args.batch_size)
-    # iterator = dataset.make_initializable_iterator()
-    # next_element = iterator.get_next()
-
-    # 2.2 prepare validate datasets
+    # 2.2 prepare custom validate dataset
     ver_list = []
     ver_name_list = []
-    # for db in args.eval_datasets:
-    print('begin db %s convert.' % args.eval_datasets)
+    print('begin db %s convert.' % args.eval_dataset)
     # data_set = eval_data_reader.load_bin(db, args.image_size, args)
     # image_array, actual_issame = eval_data_reader.load_eval_datasets(args)
     data_set = eval_data_reader.load_eval_datasets(args)
     ver_list.append(data_set)
-    ver_name_list.append(args.eval_datasets)
+    ver_name_list.append(args.eval_dataset)
 
     # 3. define network, loss, optimize method, learning rate schedule, summary writer, saver
     # 3.1 inference phase
@@ -239,19 +132,19 @@ if __name__ == '__main__':
     # print('##########'*30)
     wd_loss = 0
     for weights in tl.layers.get_variables_with_name('W_conv2d', True, True):
-        wd_loss += tf.contrib.layers.l2_regularizer(args.weight_deacy)(weights)
+        wd_loss += tf.contrib.layers.l2_regularizer(args.weight_decay)(weights)
     for W in tl.layers.get_variables_with_name('resnet_v1_50/E_DenseLayer/W', True, True):
-        wd_loss += tf.contrib.layers.l2_regularizer(args.weight_deacy)(W)
+        wd_loss += tf.contrib.layers.l2_regularizer(args.weight_decay)(W)
     for weights in tl.layers.get_variables_with_name('embedding_weights', True, True):
-        wd_loss += tf.contrib.layers.l2_regularizer(args.weight_deacy)(weights)
+        wd_loss += tf.contrib.layers.l2_regularizer(args.weight_decay)(weights)
     for gamma in tl.layers.get_variables_with_name('gamma', True, True):
-        wd_loss += tf.contrib.layers.l2_regularizer(args.weight_deacy)(gamma)
+        wd_loss += tf.contrib.layers.l2_regularizer(args.weight_decay)(gamma)
     # for beta in tl.layers.get_variables_with_name('beta', True, True):
-    #     wd_loss += tf.contrib.layers.l2_regularizer(args.weight_deacy)(beta)
+    #     wd_loss += tf.contrib.layers.l2_regularizer(args.weight_decay)(beta)
     for alphas in tl.layers.get_variables_with_name('alphas', True, True):
-        wd_loss += tf.contrib.layers.l2_regularizer(args.weight_deacy)(alphas)
+        wd_loss += tf.contrib.layers.l2_regularizer(args.weight_decay)(alphas)
     # for bias in tl.layers.get_variables_with_name('resnet_v1_50/E_DenseLayer/b', True, True):
-    #     wd_loss += tf.contrib.layers.l2_regularizer(args.weight_deacy)(bias)
+    #     wd_loss += tf.contrib.layers.l2_regularizer(args.weight_decay)(bias)
 
     # 3.5 total losses
     total_loss = inference_loss + wd_loss
@@ -300,6 +193,7 @@ if __name__ == '__main__':
 
     # restore_saver = tf.train.Saver()
     # restore_saver.restore(sess, '/home/aurora/workspaces2018/InsightFace_TF/output/ckpt/InsightFace_iter_1110000.ckpt')
+
     # 4 begin iteration
     if not os.path.exists(args.log_file_path):
         os.makedirs(args.log_file_path)

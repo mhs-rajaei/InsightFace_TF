@@ -14,8 +14,8 @@ from scipy import misc
 
 def get_parser():
     parser = argparse.ArgumentParser(description='evluation data parser')
-    parser.add_argument('--eval_datasets', default=['lfw', 'cfp_ff', 'cfp_fp', 'agedb_30'], help='evluation datasets')
-    # parser.add_argument('--eval_datasets', default=['cfp_fp'], help='evluation datasets')
+    parser.add_argument('--eval_dataset', default=['lfw', 'cfp_ff', 'cfp_fp', 'agedb_30'], help='evluation datasets')
+    # parser.add_argument('--eval_dataset', default=['cfp_fp'], help='evluation datasets')
     parser.add_argument('--eval_db_path', default='../datasets/faces_ms1m_112x112', help='evluate datasets base path')
     parser.add_argument('--image_size', default=[112, 112], help='the image size')
     parser.add_argument('--tfrecords_file_path', default='../datasets/tfrecords/eval', help='the image size')
@@ -56,7 +56,7 @@ def read_pairs(pairs_filename):
 
 
 def get_paths(args):
-    # args.eval_datasets = os.path.expanduser(args.eval_datasets)
+    # args.eval_dataset = os.path.expanduser(args.eval_dataset)
     pairs = read_pairs(os.path.expanduser(args.eval_pair))
 
     nrof_skipped_pairs = 0
@@ -64,12 +64,12 @@ def get_paths(args):
     issame_list = []
     for pair in pairs:
         if len(pair) == 3:
-            path0 = add_extension(os.path.join(args.eval_datasets, pair[0], pair[0] + '_' + '%04d' % int(pair[1])))
-            path1 = add_extension(os.path.join(args.eval_datasets, pair[0], pair[0] + '_' + '%04d' % int(pair[2])))
+            path0 = add_extension(os.path.join(args.eval_dataset, pair[0], pair[0] + '_' + '%04d' % int(pair[1])))
+            path1 = add_extension(os.path.join(args.eval_dataset, pair[0], pair[0] + '_' + '%04d' % int(pair[2])))
             issame = True
         elif len(pair) == 4:
-            path0 = add_extension(os.path.join(args.eval_datasets, pair[0], pair[0] + '_' + '%04d' % int(pair[1])))
-            path1 = add_extension(os.path.join(args.eval_datasets, pair[2], pair[2] + '_' + '%04d' % int(pair[3])))
+            path0 = add_extension(os.path.join(args.eval_dataset, pair[0], pair[0] + '_' + '%04d' % int(pair[1])))
+            path1 = add_extension(os.path.join(args.eval_dataset, pair[2], pair[2] + '_' + '%04d' % int(pair[3])))
             issame = False
         if os.path.exists(path0) and os.path.exists(path1):  # Only add the pair if both paths exist
             path_list += (path0, path1)
@@ -222,7 +222,7 @@ if __name__ == '__main__':
     args = get_parser()
     ver_list = []
     ver_name_list = []
-    for db in args.eval_datasets:
+    for db in args.eval_dataset:
         print('begin db %s convert.' % db)
         # mx2tfrecords_eval_data(args, db)
         data_set = load_bin(db, args.image_size)

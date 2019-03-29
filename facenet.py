@@ -194,7 +194,8 @@ def triplet_loss(anchor, positive, negative, alpha):
         loss = tf.reduce_mean(tf.maximum(basic_loss, 0.0), 0)
       
     return loss
-  
+
+
 def center_loss(features, label, alfa, nrof_classes):
     """Center loss based on the paper "A Discriminative Feature Learning Approach for Deep Face Recognition"
        (http://ydwen.github.io/papers/WenECCV16.pdf)
@@ -209,6 +210,7 @@ def center_loss(features, label, alfa, nrof_classes):
     with tf.control_dependencies([centers]):
         loss = tf.reduce_mean(tf.square(features - centers_batch))
     return loss, centers
+
 
 def get_image_paths_and_labels(dataset, path=None):
     if path:
@@ -229,22 +231,27 @@ def get_image_paths_and_labels(dataset, path=None):
 
     return image_paths_flat, labels_flat
 
+
 def shuffle_examples(image_paths, labels):
     shuffle_list = list(zip(image_paths, labels))
     random.shuffle(shuffle_list)
     image_paths_shuff, labels_shuff = zip(*shuffle_list)
     return image_paths_shuff, labels_shuff
 
+
 def random_rotate_image(image):
     angle = np.random.uniform(low=-10.0, high=10.0)
     return misc.imrotate(image, angle, 'bicubic')
-  
+
+
 # 1: Random rotate 2: Random crop  4: Random flip  8:  Fixed image standardization  16: Flip
 RANDOM_ROTATE = 1
 RANDOM_CROP = 2
 RANDOM_FLIP = 4
 FIXED_STANDARDIZATION = 8
 FLIP = 16
+
+
 def create_input_pipeline(input_queue, image_size, nrof_preprocess_threads, batch_size_placeholder):
     with tf.name_scope(name='Input_PipeLine'):
         images_and_labels_list = []
@@ -282,9 +289,11 @@ def create_input_pipeline(input_queue, image_size, nrof_preprocess_threads, batc
 
         return image_batch, label_batch
 
+
 def get_control_flag(control, field):
     return tf.equal(tf.mod(tf.floor_div(control, field), 2), 1)
-  
+
+
 def _add_loss_summaries(total_loss):
     """Add summaries for losses.
   
@@ -356,12 +365,14 @@ def train(total_loss, global_step, optimizer, learning_rate, moving_average_deca
   
     return train_op
 
+
 def prewhiten(x):
     mean = np.mean(x)
     std = np.std(x)
     std_adj = np.maximum(std, 1.0/np.sqrt(x.size))
     y = np.multiply(np.subtract(x, mean), 1/std_adj)
     return y  
+
 
 def reduce_var(x, axis=None, keepdims=False):
     """Variance of a tensor, alongside the specified axis.
@@ -381,6 +392,7 @@ def reduce_var(x, axis=None, keepdims=False):
     devs_squared = tf.square(tf.cast(x, dtype=tf.float32) - m)
     return tf.reduce_mean(devs_squared, axis=axis, keepdims=keepdims)
 
+
 def reduce_std(x, axis=None, keepdims=False):
     """Standard deviation of a tensor, alongside the specified axis.
 
@@ -397,6 +409,7 @@ def reduce_std(x, axis=None, keepdims=False):
     """
     return tf.sqrt(reduce_var(x, axis=axis, keepdims=keepdims))
 
+
 def tf_prewhiten(x):
     mean = tf.reduce_mean(tf.cast(x, dtype=tf.float32))
     # mean, var = tf.nn.moments(x)
@@ -406,6 +419,7 @@ def tf_prewhiten(x):
     # y = tf.multiply(tf.subtract(x, mean), 1/std_adj)
     y = tf.multiply(tf.subtract(tf.cast(x, dtype=tf.float32), tf.cast(mean, dtype=tf.float32)), 1/std_adj)
     return y
+
 
 def crop(image, random_crop, image_size):
     if image.shape[1]>image_size:
@@ -418,18 +432,21 @@ def crop(image, random_crop, image_size):
             (h, v) = (0,0)
         image = image[(sz1-sz2+v):(sz1+sz2+v),(sz1-sz2+h):(sz1+sz2+h),:]
     return image
-  
+
+
 def flip(image, random_flip):
     if random_flip and np.random.choice([True, False]):
         image = np.fliplr(image)
     return image
+
 
 def to_rgb(img):
     w, h = img.shape
     ret = np.empty((w, h, 3), dtype=np.uint8)
     ret[:, :, 0] = ret[:, :, 1] = ret[:, :, 2] = img
     return ret
-  
+
+
 def load_data(image_paths, do_random_crop, do_random_flip, image_size, do_prewhiten=True, to_gray=False):
     nrof_samples = len(image_paths)
     if to_gray:
@@ -458,6 +475,7 @@ def load_data(image_paths, do_random_crop, do_random_flip, image_size, do_prewhi
 
     return images
 
+
 def get_label_batch(label_data, batch_size, batch_index):
     nrof_examples = np.size(label_data, 0)
     j = batch_index*batch_size % nrof_examples
@@ -482,6 +500,7 @@ def get_batch(image_data, batch_size, batch_index):
     batch_float = batch.astype(np.float32)
     return batch_float
 
+
 def get_triplet_batch(triplets, batch_index, batch_size):
     ax, px, nx = triplets
     a = get_batch(ax, int(batch_size/3), batch_index)
@@ -489,6 +508,7 @@ def get_triplet_batch(triplets, batch_index, batch_size):
     n = get_batch(nx, int(batch_size/3), batch_index)
     batch = np.vstack([a, p, n])
     return batch
+
 
 def get_learning_rate_from_file(filename, epoch):
     with open(filename, 'r') as f:
@@ -505,6 +525,7 @@ def get_learning_rate_from_file(filename, epoch):
                     learning_rate = lr
                 else:
                     return learning_rate
+
 
 class ImageClass():
     "Stores the paths to images for a given class"
@@ -548,6 +569,7 @@ def load_and_preprocess_image(image_path, label=None, image_size=192, seed=313, 
         return img, label
     return img
 
+
 def preprocess_image(image, dim=96):
     # Decode it into an image tensor:
     image = tf.image.decode_image(image)
@@ -556,6 +578,7 @@ def preprocess_image(image, dim=96):
     # image /= 255.0  # normalize to [0,1] range
 
     return image
+
 
 def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, image_size=96, method='cache', BATCH_SIZE=32,
                    seed=313, performance=False, repeat_count=1, path=None, in_memory = True, normalize=True, do_resize=False,
@@ -682,65 +705,6 @@ def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, 
             if performance:
                 timeit(ds, BATCH_SIZE, repeat_count)
                 print('<=>'*10)
-
-        return ds
-
-    elif method == 'tfrecord':
-        # TFRecord File
-        # First, build a TFRecord file from the raw image data: -> use 'image_to_tf_record.py' function
-
-        # Next build a dataset that reads from the TFRecord file and decodes/reformats the images using the preprocess_image function we defined earlier.
-        image_ds = tf.data.TFRecordDataset('images.tfrec')
-        # Zip that with the labels dataset we defined earlier, to get the expected (image,label) pairs.
-        ds = tf.data.Dataset.zip((image_ds, label_ds))
-        ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
-        ds = ds.batch(BATCH_SIZE).prefetch(nrof_preprocess_threads)
-        if performance:
-            timeit(ds, BATCH_SIZE, repeat_count)
-            print('<=>' * 10)
-
-        return ds
-        # This is slower than the `cache` version because we have not cached the preprocessing!?
-
-    elif method == 'serialized':
-        # Serialized Tensors
-        # To save some preprocessing to the TFRecord file, first make a dataset of the processed images, as before:
-        paths_ds = tf.data.Dataset.from_tensor_slices(image_list)
-        image_ds = paths_ds.map(lambda image_path: load_and_preprocess_image(image_path, image_size=image_size, seed=seed, normalize=normalize,
-                                                                             do_resize=do_resize,do_random_crop=do_random_crop,
-                                                                             do_prewhiten=do_prewhiten))
-        print(image_ds)
-
-        # Now instead of a dataset of `.jpeg` strings, this is a dataset of tensors.
-        # To serialize this to a TFRecord file you first convert the dataset of tensors to a dataset of strings.
-        ds = image_ds.map(tf.serialize_tensor)
-
-        tfrec = tf.data.experimental.TFRecordWriter('images.tfrec')
-        tfrec.write(ds)
-
-        # With the preprocessing cached, data can be loaded from the TFrecord file quite efficiently.
-        # Just remember to de-serialized tensor before trying to use it.
-        RESTORE_TYPE = image_ds.output_types
-        # RESTORE_SHAPE = image_ds.output_shapes
-        img = misc.imread(image_list[0])
-        RESTORE_SHAPE = img.shape
-
-        ds = tf.data.TFRecordDataset('images.tfrec')
-
-        def parse(x):
-            result = tf.parse_tensor(x, out_type=RESTORE_TYPE)
-            result = tf.reshape(result, RESTORE_SHAPE)
-            return result
-
-        ds = ds.map(parse, num_parallel_calls=nrof_preprocess_threads)
-
-        # Now, add the labels and apply the same standard operations as before:
-        ds = tf.data.Dataset.zip((ds, label_ds))
-        ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
-
-        ds = ds.batch(BATCH_SIZE).prefetch(nrof_preprocess_threads)
-        if performance:
-            timeit(ds, BATCH_SIZE, repeat_count)
 
         return ds
 
@@ -956,6 +920,7 @@ def calculate_val_far(threshold, dist, actual_issame):
     far = float(false_accept) / float(n_diff)
     return val, far
 
+
 def store_revision_info(src_path, output_dir, arg_string):
     try:
         # Get git hash
@@ -983,11 +948,13 @@ def store_revision_info(src_path, output_dir, arg_string):
         text_file.write('git hash: %s\n--------------------\n' % git_hash)
         text_file.write('%s' % git_diff)
 
+
 def list_variables(filename):
     reader = training.NewCheckpointReader(filename)
     variable_map = reader.get_variable_to_shape_map()
     names = sorted(variable_map.keys())
     return names
+
 
 def put_images_on_grid(images, shape=(16,8)):
     nrof_images = images.shape[0]
@@ -1005,6 +972,7 @@ def put_images_on_grid(images, shape=(16,8)):
         if img_index>=nrof_images:
             break
     return img
+
 
 def write_arguments_to_file(args, filename):
     with open(filename, 'w') as f:
