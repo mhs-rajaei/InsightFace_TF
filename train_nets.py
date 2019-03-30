@@ -28,6 +28,7 @@ L_Resnet_E_IR_fix_issue9 = SourceFileLoader('L_Resnet_E_IR_fix_issue9', os.path.
 face_losses = SourceFileLoader('face_losses', os.path.join(PROJECT_PATH, 'losses/face_losses.py')).load_module()
 eval_data_reader = SourceFileLoader('eval_data_reader', os.path.join(PROJECT_PATH, 'data/eval_data_reader.py')).load_module()
 verification = SourceFileLoader('verification', os.path.join(PROJECT_PATH, 'verification.py')).load_module()
+lfw = SourceFileLoader('lfw', os.path.join(PROJECT_PATH, 'lfw.py')).load_module()
 
 
 class Args:
@@ -42,7 +43,7 @@ class Args:
     eval_pair = eval_pairs_path
 
     image_size = [160, 160]
-    num_output = 85164  # ?
+    num_output = 100  # ?
 
     train_dataset_dir = train_dataset_path
     summary_path = join(log_path, 'summary')
@@ -52,10 +53,10 @@ class Args:
     saver_maxkeep = 10
     buffer_size = 10000
     log_device_mapping = False
-    summary_interval = 1
+    summary_interval = 100
     ckpt_interval = 100
-    validate_interval = 50
-    show_info_interval = 10
+    validate_interval = 1
+    show_info_interval = 1
     seed = 313
     nrof_preprocess_threads = 4
 
@@ -92,7 +93,8 @@ if __name__ == '__main__':
                                                                                 do_random_flip_left_right=True),
                             num_parallel_calls=args.nrof_preprocess_threads)
 
-    print(':::::::::::::::::::::::::::::::: In Memory Cache ::::::::::::::::::::::::::::::::')
+    print(':::::::::::::::::::::::::::::::: In Memory Cache Dataset Pipeline ::::::::::::::::::::::::::::::::')
+
     tf_dataset_train = image_label_ds.cache()
     image_count = len(image_list)
     repeat_count = 1

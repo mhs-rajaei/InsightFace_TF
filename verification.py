@@ -32,6 +32,10 @@ from scipy import interpolate
 import datetime
 import mxnet as mx
 
+import os
+PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
+from importlib.machinery import SourceFileLoader
+lfw = SourceFileLoader('lfw', os.path.join(PROJECT_PATH, 'lfw.py')).load_module()
 
 def calculate_roc(thresholds, embeddings1, embeddings2, actual_issame, nrof_folds=10, pca=0):
     assert (embeddings1.shape[0] == embeddings2.shape[0])
@@ -245,6 +249,13 @@ def test(data_set, sess, embedding_tensor, batch_size, label_shape=None, feed_di
     print('infer time', time_consumed)
     _, _, accuracy, val, val_std, far = evaluate(embeddings, issame_list, nrof_folds=10)
     acc2, std2 = np.mean(accuracy), np.std(accuracy)
+
+    # _, _, accuracy_lfw, val_lfw, val_std_lfw, far_lfw = lfw.evaluate(embeddings, issame_list, nrof_folds=10, distance_metric=0,
+    #                                                  subtract_mean=False)
+    # print(f"accuracy_lfw {accuracy_lfw}, val_lfw: {val_lfw}, val_std_lfw: {val_std_lfw}, far_lfw: {far_lfw}")
+    #
+    # print('accuracy_lfw: %2.5f+-%2.5f' % (np.mean(accuracy_lfw), np.std(accuracy_lfw)))
+    # print('val_lfw rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val_lfw, val_std_lfw, far_lfw))
     return acc1, std1, acc2, std2, _xnorm, embeddings_list
 
 

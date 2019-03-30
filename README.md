@@ -2,9 +2,8 @@
 ### My Changes
 #### Thanks Chen Wei, David Sandberg, Victor Zhang and many other peoples.
 ##### Removing of tfrecords and adding my parser for loading raw 'jpej' or 'png' images.
-##### Adding of custom 'pairs.txt' creation from 'https://github.com/VictorZhang2014/facenet/blob/master/mydata/generate_pairs.py' (I corrected some of the bugs of this code).
+##### Custom validation dataset and custom 'pairs.txt' creation from 'https://github.com/VictorZhang2014/facenet/blob/master/mydata/generate_pairs.py' (I corrected some bugs of this code).
 ##### Ready for use in google colab (you must upload your code and some line of code, use this link for help: 'https://zerowithdot.com/colab-workspace/').
-##### Custom validation dataset.
 ##### ArgParse removed and Class Args added.
 
 
