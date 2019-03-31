@@ -59,6 +59,7 @@ class Args:
     show_info_interval = 1
     seed = 313
     nrof_preprocess_threads = 4
+    restore_path = r'F:\Documents\JetBrains\PyCharm\OFR\InsightFace_TF\output\ckpt\model_d'
 
 
 if __name__ == '__main__':
@@ -194,8 +195,9 @@ if __name__ == '__main__':
     # 3.13 init all variables
     sess.run(tf.global_variables_initializer())
 
-    # restore_saver = tf.train.Saver()
-    # restore_saver.restore(sess, '/home/aurora/workspaces2018/InsightFace_TF/output/ckpt/InsightFace_iter_1110000.ckpt')
+    restore_saver = tf.train.Saver()
+    if args.restore_path:
+        restore_saver.restore(sess, args.restore_path)
 
     # 4 begin iteration
     if not os.path.exists(args.log_file_path):
