@@ -12,7 +12,7 @@ class GeneratePairs:
     """
     counter = 1
 
-    def __init__(self, data_dir, pairs_filepath, img_ext):
+    def __init__(self, data_dir, pairs_filepath, img_ext, num_random_images_per_folder):
         """
         Parameter data_dir, is your data directory.
         Parameter pairs_filepath, where is the pairs.txt that belongs to.
@@ -21,93 +21,100 @@ class GeneratePairs:
         self.data_dir = data_dir
         self.pairs_filepath = pairs_filepath
         self.img_ext = img_ext
+        self.num_random_images_per_folder = num_random_images_per_folder
 
+        if os.name == 'nt':
+            self.separator = "\\"
+        else:
+            self.separator = "/"
+
+        self.remaining = []
+        for name in os.listdir(self.data_dir):
+            if os.path.isdir(os.path.join(self.data_dir, name)):
+                self.remaining.append(name)
+
+    def update_remaining(self):
+        self.remaining = []
+        for name in os.listdir(self.data_dir):
+            if os.path.isdir(os.path.join(self.data_dir, name)):
+                self.remaining.append(name)
 
     def generate(self):
         self._generate_matches_pairs()
         self._generate_mismatches_pairs()
 
-
     def _generate_matches_pairs(self):
         """
         Generate all matches pairs
         """
-        for name in os.listdir(self.data_dir):
-            if name == ".DS_Store":
-                continue
-
+        for name in self.remaining:
             a = []
-            for file in os.listdir(self.data_dir + '\\' + name):
-            # for file in os.listdir(self.data_dir):
-                if file == ".DS_Store":
-                    continue
-                a.append(file)
+            for file in os.listdir(os.path.join(self.data_dir, name)):
+                if self.img_ext in file:
+                    a.append(os.path.join(name, file))
 
-            with open(self.pairs_filepath, "a") as f:
-                for i in range(3):
-                    temp = random.choice(a).split("_")  # This line may vary depending on how your images are named.
-                    # w = temp[0] + "_" + temp[1]
-                    w = '_'.join(temp[:-1])
-                    try:
-                        l = random.choice(a).split("_")[-1].lstrip("0").rstrip(self.img_ext)
-                        r = random.choice(a).split("_")[-1].lstrip("0").rstrip(self.img_ext)
+            if a:
+                with open(self.pairs_filepath, "a") as f:
+                    for i in range(self.num_random_images_per_folder):
+                        temp = random.choice(a).split(self.separator)  # This line may vary depending on how your images are named.
+                        w = self.separator.join(temp[:-1])
 
-                        print(w + " " + l + " " + r, 'counter: ', self.counter)
+                        l = random.choice(a).split(self.separator)[-1]
+                        r = random.choice(a).split(self.separator)[-1]
 
-                        if 'William_Ford' in a:
-                            print()
-
+                        print("For '" + os.path.join(self.data_dir, name) + "' and counter: ", self.counter, ', Match Pair:', w + " -> " + l
+                              + ", " + r)
 
                         f.write(w + "\t" + l + "\t" + r + "\n")
                         self.counter += 1
-                    except Exception as err:
-                        print(err)
-                        # print('Setting index to 1')
-                        # l = random.choice(a).split("_")[1].lstrip("0").rstrip(self.img_ext)
-                        # l = random.choice(a).split.lstrip("0").rstrip(self.img_ext)
-                        # r = random.choice(a).split("_")[1].lstrip("0").rstrip(self.img_ext)
-                        # f.write(w + "\t" + l + "\t" + r + "\n")
-
 
 
     def _generate_mismatches_pairs(self):
         """
         Generate all mismatches pairs
         """
-        for i, name in enumerate(os.listdir(self.data_dir)):
-            if name == ".DS_Store":
-                continue
+        tmptmp = ['00061', '10285', '00074', '10156', '10041', '20344', '10041', '20344', '10041', '20344', '10217', '20345', '20324', '20345', '20344',
+                  '10268', '20345', '20481', '20394', '00074', '20412', '10014', '20436', '20412', '30604', '10218']
+        for i, name in enumerate(self.remaining):
+                self.update_remaining()
+                del self.remaining[i]  # deletes the file from the list, so that it is not chosen again
+                other_dir = random.choice(self.remaining)
+                with open(self.pairs_filepath, "a") as f:
+                    for _ in range(self.num_random_images_per_folder):
 
-            remaining = os.listdir(self.data_dir)
-            remaining = [f_n for f_n in remaining if f_n != ".DS_Store"]
-            # del remaining[i] # deletes the file from the list, so that it is not chosen again
-            other_dir = random.choice(remaining)
-            with open(self.pairs_filepath, "a") as f:
-                for i in range(3):
-                    # file1 = random.choice(os.listdir(self.data_dir + name))
-                    file1 = random.choice(os.listdir(self.data_dir + '\\' + name))
-                    # file2 = random.choice(os.listdir(self.data_dir + other_dir))
-                    file2 = random.choice(os.listdir(self.data_dir + '\\' + other_dir))
-                    if 'William_Ford' in file1 or 'William_Ford' in file2:
-                        print()
-                    if 'Yang_Hee_Kim' in file2:
-                        print()
-                    # f.write(name + "\t" + file1.split("_")[2].lstrip("0").rstrip(self.img_ext) + "\t")
-                    f.write(name + "\t" + file1.split("_")[-1].lstrip("0").rstrip(self.img_ext) + "\t" + other_dir + "\t" + file2.split("_")[
-                        -1].lstrip("0").rstrip(self.img_ext) + "\n")
-                    print(name + " " + file1.split("_")[-1].lstrip("0").rstrip(self.img_ext) + ' ' + other_dir + ' ' +
-                          file2.split("_")[-1].lstrip("0").rstrip(self.img_ext), 'counter:', self.counter)
-                    self.counter += 1
-        print()
-                # f.write("\n")
+                        if name in tmptmp:
+                            print()
+                        if other_dir in tmptmp:
+                            print()
+
+                        temps_file_1 = os.listdir(os.path.join(self.data_dir, name))
+                        if temps_file_1:
+                            file1 = random.choice(temps_file_1)
+
+                        temps_file_2 = os.listdir(os.path.join(self.data_dir, other_dir))
+                        if temps_file_2:
+                            file2 = random.choice(temps_file_2)
+
+                        if temps_file_1 and temps_file_2:
+                            if self.img_ext in file1 and self.img_ext in file2:
+                                print("For '" + self.data_dir + "' and counter: ", self.counter, ', MisMatch Pair:',
+                                      name + " " + file1.split(self.separator)[-1] + ' ' +
+                                      other_dir + ' ' + file2.split(self.separator)[-1])
+
+                                f.write(name + "\t" + file1.split(self.separator)[-1] + "\t" + other_dir + "\t" +
+                                        file2.split(self.separator)[-1] + "\n")
+
+                                self.counter += 1
 
 
 if __name__ == '__main__':
     # data_dir = "my_own_datasets/"
-    data_dir = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_test_Copy'
-    pairs_filepath = r"F:\Documents\JetBrains\PyCharm\OFR\InsightFace_TF\data\pairs.txt"
+    # data_dir = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_test_Copy'
+    data_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS_160"
+    # pairs_filepath = r"F:\Documents\JetBrains\PyCharm\OFR\original_facenet\data\All_VIS_160_pairs_1.txt"
+    pairs_filepath = r"F:\Documents\JetBrains\PyCharm\OFR\original_facenet\data\All_VIS_160_pairs_1.txt"
     # img_ext = ".jpg"
     img_ext = ".png"
-    generatePairs = GeneratePairs(data_dir, pairs_filepath, img_ext)
+    generatePairs = GeneratePairs(data_dir, pairs_filepath, img_ext, num_random_images_per_folder=1)
     generatePairs.generate()
 

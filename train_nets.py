@@ -125,6 +125,7 @@ if __name__ == '__main__':
     test_net = L_Resnet_E_IR_fix_issue9.get_resnet(images, args.net_depth, type='ir', w_init=w_init_method, trainable=False, reuse=True,
                                                    keep_rate=dropout_rate)
     embedding_tensor = test_net.outputs
+    # embedding_tensor = net.outputs
     # 3.3 define the cross entropy
     inference_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logit, labels=labels))
     # inference_loss_avg = tf.reduce_mean(inference_loss)
