@@ -6,10 +6,8 @@ from tensorlayer.layers import Layer, list_remove_repeat
 
 
 class ElementwiseLayer(Layer):
-# class ElementwiseLayer(layers):
     """
     The :class:`ElementwiseLayer` class combines multiple :class:`Layer` which have the same output shapes by a given elemwise-wise operation.
-
     Parameters
     ----------
     layer : a list of :class:`Layer` instances
@@ -28,7 +26,6 @@ class ElementwiseLayer(Layer):
         act = None,
     ):
         Layer.__init__(self, name=name)
-        # Layer.__init__(self, name=name, prev_layer=None)
 
         if act:
             print("  [TL] ElementwiseLayer %s: size:%s fn:%s, act:%s" % (
@@ -60,15 +57,12 @@ class ElementwiseLayer(Layer):
 class BatchNormLayer(Layer):
     """
     The :class:`BatchNormLayer` class is a normalization layer, see ``tf.nn.batch_normalization`` and ``tf.nn.moments``.
-
     Batch normalization on fully-connected or convolutional maps.
-
     ```
         https://www.tensorflow.org/api_docs/python/tf/cond
         If x < y, the tf.add operation will be executed and tf.square operation will not be executed.
         Since z is needed for at least one branch of the cond, the tf.multiply operation is always executed, unconditionally.
     ```
-
     Parameters
     -----------
     layer : a :class:`Layer` instance
@@ -87,12 +81,10 @@ class BatchNormLayer(Layer):
     dtype : tf.float32 (default) or tf.float16
     name : a string or None
         An optional name to attach to this layer.
-
     References
     ----------
     - `Source <https://github.com/ry/tensorflow-resnet/blob/master/resnet.py>`_
     - `stackoverflow <http://stackoverflow.com/questions/38312668/how-does-one-do-inference-with-batch-normalization-with-tensor-flow>`_
-
     """
 
     def __init__(
@@ -110,7 +102,6 @@ class BatchNormLayer(Layer):
             name='batchnorm_layer',
     ):
         Layer.__init__(self, name=name)
-        # Layer.__init__(self, name=name, prev_layer=None)
         self.inputs = layer.outputs
         print("  [TL] BatchNormLayer %s: decay:%f epsilon:%f act:%s is_train:%s" % (self.name, decay, epsilon, act.__name__, is_train))
         x_shape = self.inputs.get_shape()
@@ -243,7 +234,6 @@ def bottleneck_IR(inputs, depth, depth_bottleneck, stride, rate=1, w_init=None, 
         residual = BatchNormLayer(residual, act=tf.identity, is_train=True, trainable=trainable, name='conv1_bn2')
         # bottleneck prelu
         residual = tl.layers.PReluLayer(residual)
-        # residual = tl.layers.PRelu6Layer(residual)
         # bottleneck layer 2
         residual = conv2d_same(residual, depth, kernel_size=3, strides=stride, rate=rate, w_init=w_init, scope='conv2', trainable=trainable)
         output = ElementwiseLayer(layer=[shortcut, residual],
@@ -269,7 +259,6 @@ def bottleneck_IR_SE(inputs, depth, depth_bottleneck, stride, rate=1, w_init=Non
         residual = BatchNormLayer(residual, act=tf.identity, is_train=True, trainable=trainable, name='conv1_bn2')
         # bottleneck prelu
         residual = tl.layers.PReluLayer(residual)
-        # residual = tl.layers.PRelu6Layer(residual)
         # bottleneck layer 2
         residual = conv2d_same(residual, depth, kernel_size=3, strides=stride, rate=rate, w_init=w_init, scope='conv2', trainable=trainable)
         # squeeze
@@ -305,7 +294,6 @@ def resnet(inputs, bottle_neck, blocks, w_init=None, trainable=None, reuse=False
                                    act=None, W_init=w_init, b_init=None, name='conv1', use_cudnn_on_gpu=True)
             net = BatchNormLayer(net, act=tf.identity, name='bn0', is_train=True, trainable=trainable)
             net = tl.layers.PReluLayer(net, name='prelu0')
-            # net = tl.layers.PRelu6Layer(net, name='prelu0')
         else:
             raise ValueError('The standard resnet must support the bottleneck layer')
         for block in blocks:
@@ -327,7 +315,6 @@ def resnet(inputs, bottle_neck, blocks, w_init=None, trainable=None, reuse=False
 
 class Block(collections.namedtuple('Block', ['scope', 'unit_fn', 'args'])):
     """A named tuple describing a ResNet block.
-
     Its parts are:
       scope: The scope of the `Block`.
       unit_fn: The ResNet unit function which takes as input a `Tensor` and
@@ -340,14 +327,12 @@ class Block(collections.namedtuple('Block', ['scope', 'unit_fn', 'args'])):
 
 def resnetse_v1_block(scope, base_depth, num_units, stride, rate=1, unit_fn=None):
   """Helper function for creating a resnet_v1 bottleneck block.
-
   Args:
     scope: The scope of the block.
     base_depth: The depth of the bottleneck layer for each unit.
     num_units: The number of units in the block.
     stride: The stride of the block, implemented as a stride in the last unit.
       All other units have stride=1.
-
   Returns:
     A resnet_v1 bottleneck block.
   """
