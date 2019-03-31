@@ -27,8 +27,8 @@ class ElementwiseLayer(Layer):
         name ='elementwise_layer',
         act = None,
     ):
-        # Layer.__init__(self, name=name)
-        Layer.__init__(self, name=name, prev_layer=None)
+        Layer.__init__(self, name=name)
+        # Layer.__init__(self, name=name, prev_layer=None)
 
         if act:
             print("  [TL] ElementwiseLayer %s: size:%s fn:%s, act:%s" % (
@@ -109,8 +109,8 @@ class BatchNormLayer(Layer):
             trainable=None,
             name='batchnorm_layer',
     ):
-        # Layer.__init__(self, name=name)
-        Layer.__init__(self, name=name, prev_layer=None)
+        Layer.__init__(self, name=name)
+        # Layer.__init__(self, name=name, prev_layer=None)
         self.inputs = layer.outputs
         print("  [TL] BatchNormLayer %s: decay:%f epsilon:%f act:%s is_train:%s" % (self.name, decay, epsilon, act.__name__, is_train))
         x_shape = self.inputs.get_shape()
@@ -242,8 +242,8 @@ def bottleneck_IR(inputs, depth, depth_bottleneck, stride, rate=1, w_init=None, 
                                     W_init=w_init, name='conv1', use_cudnn_on_gpu=True)
         residual = BatchNormLayer(residual, act=tf.identity, is_train=True, trainable=trainable, name='conv1_bn2')
         # bottleneck prelu
-        # residual = tl.layers.PReluLayer(residual)
-        residual = tl.layers.PRelu6Layer(residual)
+        residual = tl.layers.PReluLayer(residual)
+        # residual = tl.layers.PRelu6Layer(residual)
         # bottleneck layer 2
         residual = conv2d_same(residual, depth, kernel_size=3, strides=stride, rate=rate, w_init=w_init, scope='conv2', trainable=trainable)
         output = ElementwiseLayer(layer=[shortcut, residual],
@@ -268,8 +268,8 @@ def bottleneck_IR_SE(inputs, depth, depth_bottleneck, stride, rate=1, w_init=Non
                                     W_init=w_init, name='conv1', use_cudnn_on_gpu=True)
         residual = BatchNormLayer(residual, act=tf.identity, is_train=True, trainable=trainable, name='conv1_bn2')
         # bottleneck prelu
-        # residual = tl.layers.PReluLayer(residual)
-        residual = tl.layers.PRelu6Layer(residual)
+        residual = tl.layers.PReluLayer(residual)
+        # residual = tl.layers.PRelu6Layer(residual)
         # bottleneck layer 2
         residual = conv2d_same(residual, depth, kernel_size=3, strides=stride, rate=rate, w_init=w_init, scope='conv2', trainable=trainable)
         # squeeze
@@ -304,8 +304,8 @@ def resnet(inputs, bottle_neck, blocks, w_init=None, trainable=None, reuse=False
             net = tl.layers.Conv2d(net_inputs, n_filter=64, filter_size=(3, 3), strides=(1, 1),
                                    act=None, W_init=w_init, b_init=None, name='conv1', use_cudnn_on_gpu=True)
             net = BatchNormLayer(net, act=tf.identity, name='bn0', is_train=True, trainable=trainable)
-            # net = tl.layers.PReluLayer(prev_layer=net, name='prelu0')
-            net = tl.layers.PRelu6Layer(prev_layer=net, name='prelu6_0')
+            net = tl.layers.PReluLayer(net, name='prelu0')
+            # net = tl.layers.PRelu6Layer(net, name='prelu0')
         else:
             raise ValueError('The standard resnet must support the bottleneck layer')
         for block in blocks:
