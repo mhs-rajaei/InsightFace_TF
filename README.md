@@ -1,6 +1,6 @@
 ## Insight Face in TensorFlow
 ### My Changes
-#### Thanks Chen Wei, David Sandberg, Victor Zhang and many other peoples.
+#### Thanks [Chen Wei](https://github.com/auroua/InsightFace_TF), [David Sandberg](https://github.com/davidsandberg/facenet), [Victor Zhang](https://github.com/VictorZhang2014/facenet) and many other peoples.
 ##### Removing of tfrecords and adding my parser for loading raw 'jpeg' or 'png' images.
 ##### Custom validation dataset and custom 'pairs.txt' creation from [here](https://github.com/VictorZhang2014/facenet/blob/master/mydata/generate_pairs.py) (I corrected some bugs of this code).
 ##### Ready for use in google colab (you must upload your code, model, etc. Use this link for help: [here](https://zerowithdot.com/colab-workspace).
@@ -100,9 +100,9 @@
 
 
 #### Requirements
-1. TensorFlow 1.4 1.6
-2. TensorLayer 1.7
-3. cuda8&cudnn6 or cuda9&cudnn7
+1. TensorFlow >= 1.7
+2. TensorLayer = 1.7
+3. cuda8&cudnn6 or cuda9&cudnn7 (if you want use tensorflow gpu)
 4. Python3
 
 
