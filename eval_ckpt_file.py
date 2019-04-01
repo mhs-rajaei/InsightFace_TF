@@ -60,8 +60,8 @@ class Args:
     ckpt_index_list = ['710000.ckpt']
 
     # eval_dataset = eval_dir_path
-    eval_pair = os.path.join(PROJECT_PATH, 'data/All_NIR_112_pairs_3.txt')
-    eval_dataset = r'E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All NIR_112'
+    eval_pair = os.path.join(PROJECT_PATH, 'data/All VIS+NIR_112_pairs_6.txt')
+    eval_dataset = r'E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS+NIR_112'
 
 
 if __name__ == '__main__':
