@@ -3,6 +3,9 @@
 import os
 import random
 
+
+PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
+
 class GeneratePairs:
     """
     Generate the pairs.txt file that is used for training face classifier when calling python `src/train_softmax.py`.
@@ -108,13 +111,11 @@ class GeneratePairs:
 
 
 if __name__ == '__main__':
-    # data_dir = "my_own_datasets/"
-    # data_dir = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_test_Copy'
-    data_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS_160"
-    # pairs_filepath = r"F:\Documents\JetBrains\PyCharm\OFR\original_facenet\data\All_VIS_160_pairs_1.txt"
-    pairs_filepath = r"F:\Documents\JetBrains\PyCharm\OFR\original_facenet\data\All_VIS_160_pairs_1.txt"
+    data_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All NIR_112"
+    eval_pairs_path = os.path.join(PROJECT_PATH, 'data/All_NIR_112_pairs_3.txt')
+    pairs_filepath = eval_pairs_path
     # img_ext = ".jpg"
     img_ext = ".png"
-    generatePairs = GeneratePairs(data_dir, pairs_filepath, img_ext, num_random_images_per_folder=1)
+    generatePairs = GeneratePairs(data_dir, pairs_filepath, img_ext, num_random_images_per_folder=3)
     generatePairs.generate()
 

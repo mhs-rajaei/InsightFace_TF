@@ -14,9 +14,7 @@ PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 log_path = os.path.join(PROJECT_PATH, 'output')
 models_path = os.path.join(PROJECT_PATH, 'models')
 # train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\1024First_lfw_160'
-# train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_train'
-# eval_dir_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_test_Copy'
-eval_pairs_path = os.path.join(PROJECT_PATH, 'data/All_VIS_112_pairs_3')
+# eval_pairs_path = os.path.join(PROJECT_PATH, 'data/All_VIS_112_pairs_3.txt')
 
 
 from importlib.machinery import SourceFileLoader
@@ -39,9 +37,8 @@ class Args:
     momentum = 0.9
     weight_decay = 5e-4
 
-
     image_size = [112, 112]
-    num_output = 85164  # ?
+    num_output = 85164
 
     # train_dataset_dir = train_dataset_path
     train_dataset_dir = None
@@ -54,39 +51,26 @@ class Args:
     log_device_mapping = False
     summary_interval = 100
     ckpt_interval = 100
-    validate_interval = 1
-    show_info_interval = 1
+    validate_interval = 100
+    show_info_interval = 100
     seed = 313
     nrof_preprocess_threads = 4
 
     ckpt_file = r'F:\Documents\JetBrains\PyCharm\OFR\InsightFace_TF\output\ckpt\model_d\InsightFace_iter_best_'
     ckpt_index_list = ['710000.ckpt']
 
-    eval_pair = eval_pairs_path
     # eval_dataset = eval_dir_path
-    eval_dataset = r'E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS_112'
+    eval_pair = os.path.join(PROJECT_PATH, 'data/All_NIR_112_pairs_3.txt')
+    eval_dataset = r'E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All NIR_112'
 
 
 if __name__ == '__main__':
     # args = get_args()
     args = Args()
-    # ver_list = []
-    # ver_name_list = []
-    # for db in args.eval_datasets:
-    #     print('begin db %s convert.' % db)
-    #     data_set = load_bin(db, args.image_size, args)
-    #     ver_list.append(data_set)
-    #     ver_name_list.append(db)
+
     ver_list = []
     ver_name_list = []
     print('begin db %s convert.' % args.eval_dataset)
-    # data_set = eval_data_reader.load_bin(db, args.image_size, args)
-    # Read the file containing the pairs used for testing
-    # pairs = eval_data_reader.read_pairs_2(os.path.expanduser(args.eval_pair))
-    # Get the paths for the corresponding images
-    # paths, _actual_issame = eval_data_reader.get_paths_2(os.path.expanduser(args.eval_dataset), pairs)
-
-    # image_array, actual_issame = eval_data_reader.load_eval_datasets(args)
 
     data_set = eval_data_reader.load_eval_datasets_2(args)
     ver_list.append(data_set)

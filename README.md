@@ -6,11 +6,34 @@
 ##### Ready for use in google colab (you must upload your code, model, etc. Use this link for help: [here](https://zerowithdot.com/colab-workspace).
 ##### ArgParse removed and Class Args added.
 
-### Restoring ckpt (Pre-trainde model) and validate this model on custom dataset
-* Download pre-trained weights of model d, you can download this model from [google drive](https://drive.google.com/open?id=19PbuQP2wDn-vXfNfc4HFPSE1rZNG18VG).
-* In following and in each step, add currect path to class Args.
-* Allign your custom dataset with [align_dataset_mtcnn.py](https://github.com/mhs-rajaei/InsightFace_TF/blob/master/align/align_dataset_mtcnn.py).
-* Generate 'pairs.txt' with ['generate_pairs.py'](https://github.com/mhs-rajaei/InsightFace_TF/blob/master/generate_pairs.py).
+### Restoring ckpt (Pre-trained model) and validate this model on the custom dataset
+* The custom dataset must have this structure (don't worry about empty folders or other files in the custom dataset. Name of folder or images doesn't matter, but make sure that your name doesn't contain tab or '\t', I use tab as the delimiter in 'pairs.txt':
+
+```
+The custom daataset:
+    ├── folder1
+    │   ├── image1.ext
+    │   ├── image2.ext
+    │   ├── image3.ext
+    │   ├── ...
+    ├── folder2
+    │   ├── image1.ext
+    │   ├── image2.ext
+    │   ├── image3.ext
+    │   ├── image4.ext
+    │   └── ...
+    ├── folder3
+    │   ├── image1.ext
+    │   ├── image2.ext
+    │   ├── ...
+    ...
+    ...
+```
+* Download pre-trained weights of model d, you can download this model from  [google drive](https://drive.google.com/open?id=19PbuQP2wDn-vXfNfc4HFPSE1rZNG18VG).
+* In the following and in each step, add the correct path to class Args.
+* Align your custom dataset with [align_dataset_mtcnn.py](https://github.com/mhs-rajaei/InsightFace_TF/blob/master/align/align_dataset_mtcnn.py).
+* Generate 'pairs.txt' with ['generate_pairs.py'](https://github.com/mhs-rajaei/InsightFace_TF/blob/master/generate_pairs.py) (set image 
+extension to 'img_ext' in 'generate_pairs.py')
 * Use ['eval_ckpt_file.py'](https://github.com/mhs-rajaei/InsightFace_TF/blob/master/eval_ckpt_file.py).
 
 
@@ -100,7 +123,7 @@
 
 
 #### Requirements
-1. TensorFlow >= 1.7
+1. TensorFlow >= 1.7 and <= 1.13.1
 2. TensorLayer = 1.7
 3. cuda8&cudnn6 or cuda9&cudnn7 (if you want use tensorflow gpu)
 4. Python3
