@@ -320,6 +320,7 @@ def _add_loss_summaries(total_loss):
   
     return loss_averages_op
 
+
 def train(total_loss, global_step, optimizer, learning_rate, moving_average_decay, update_gradient_vars, log_histograms=True):
     # Generate moving averages of all losses and associated summaries.
     loss_averages_op = _add_loss_summaries(total_loss)
@@ -487,6 +488,7 @@ def get_label_batch(label_data, batch_size, batch_index):
         batch = np.vstack([x1,x2])
     batch_int = batch.astype(np.int64)
     return batch_int
+
 
 def get_batch(image_data, batch_size, batch_index):
     nrof_examples = np.size(image_data, 0)

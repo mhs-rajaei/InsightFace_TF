@@ -81,6 +81,59 @@ def get_paths(args):
 
     return path_list, issame_list
 
+
+def read_pairs_2(pairs_filename):
+    from pprint import pprint
+    pairs = []
+    with open(pairs_filename, 'r') as f:
+        for line in f.readlines()[1:]:
+            pair = line.strip().split('\t')
+            # print(line)
+            # pprint(pair)
+            if pair not in pairs:
+                pairs.append(pair)
+    # pairs = remove_duplicates(pairs)
+    return np.array(pairs)
+
+
+def get_paths_3(args):
+
+    # Read the file containing the pairs used for testing
+    pairs = read_pairs_2(os.path.expanduser(args.eval_pair))
+    # Get the paths for the corresponding images
+    path_list, issame_list = get_paths_2(os.path.expanduser(args.eval_dataset), pairs)
+
+    return path_list, issame_list
+
+
+def get_paths_2(lfw_dir, pairs):
+    nrof_skipped_pairs = 0
+    path_list = []
+    issame_list = []
+    for pair in pairs:
+        if len(pair) == 3:
+            path0 = (os.path.join(lfw_dir, pair[0], pair[1]))
+            path1 = (os.path.join(lfw_dir, pair[0], pair[2]))
+
+            issame = True
+
+        elif len(pair) == 4:
+            path0 = os.path.join(lfw_dir, pair[0], pair[1])
+            path1 = os.path.join(lfw_dir, pair[2], pair[3])
+
+            issame = False
+
+        if os.path.exists(path0) and os.path.exists(path1):  # Only add the pair if both paths exist
+            path_list += (path0, path1)
+            issame_list.append(issame)
+        else:
+            print(path0, path1)
+            nrof_skipped_pairs += 1
+    if nrof_skipped_pairs > 0:
+        print('Skipped %d image pairs' % nrof_skipped_pairs)
+    return path_list, issame_list
+
+
 def load_bin(path, image_size):
     '''
     :param path: the input file path
@@ -213,10 +266,34 @@ def load_eval_datasets(args):
             data[flip][i, ...] = img
         i += 1
         if i % 1000 == 0:
-            print('loading bin', i)
+            print('loading images', i)
     print(data.shape)
     return data, issame_list
 
+
+def load_eval_datasets_2(args):
+    # bins, issame_list = pickle.load(open(os.path.join(args.eval_db_path, db_name+'.bin'), 'rb'), encoding='bytes')
+    image_path_list, issame_list = get_paths_3(args)
+    # data_list = []
+    data = np.zeros((2, len(issame_list)*2, args.image_size[0], args.image_size[1], 3), dtype=np.float32)
+    # for _ in [0,1]:
+    #     data = np.zeros((len(issame_list)*2, args.image_size[0], args.image_size[1], 3), dtype=np.float32)
+    #     data_list.append(data)
+    for i in range(len(issame_list)*2):
+        _bin = image_path_list[i]
+        # img = mx.image.imdecode(_bin).asnumpy()
+        img = misc.imread(_bin)
+        # img = mx.image.imdecode(img).asnumpy()
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        for flip in [0, 1]:
+            if flip == 1:
+                img = np.fliplr(img)
+            data[flip][i, ...] = img
+        i += 1
+        if i % 1000 == 0:
+            print('loading images', i)
+    print(data.shape)
+    return data, issame_list
 
 if __name__ == '__main__':
     args = get_parser()

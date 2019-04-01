@@ -63,10 +63,10 @@ class Args:
 
 
 if __name__ == '__main__':
-    args = Args()
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     # 1. define global parameters
-    # args = get_parser()
+    # Hyper parameters
+    args = Args()
     global_step = tf.Variable(name='global_step', initial_value=0, trainable=False)
     inc_op = tf.assign_add(global_step, 1, name='increment_global_step')
     images = tf.placeholder(name='img_inputs', shape=[None, *args.image_size, 3], dtype=tf.float32)
@@ -77,21 +77,45 @@ if __name__ == '__main__':
     # 2.1 train datasets
     # the image is substracted 127.5 and multiplied 1/128.
     # random flip left right
-    tfrecords_f = os.path.join(args.train_dataset_dir, 'tran.tfrecords')
-    dataset = tf.data.TFRecordDataset(tfrecords_f)
-    # dataset = dataset.map(lambda image_path, label: mx2tfrecords.mr_parse_function(image_path, label=label))
-    # dataset = dataset.shuffle(buffer_size=args.buffer_size)
-    dataset = dataset.batch(args.batch_size)
-    iterator = dataset.make_initializable_iterator()
-    next_element = iterator.get_next()
-    # 2.2 prepare validate datasets
+
+    # Creating dataset batch by tf.data
+    mr_dataset = facenet.get_dataset(args.train_dataset_dir, nrof_preprocess_threads=args.nrof_preprocess_threads)
+
+    # Get a list of image paths and their labels
+    image_list, label_list = facenet.get_image_paths_and_labels(mr_dataset)
+
+    # Making dataset from image path's
+    tf_dataset_train = tf.data.Dataset.from_tensor_slices((image_list, label_list))
+    # Now create a new dataset that loads and formats images on the fly by mapping preprocess_image over the dataset of paths.
+    image_label_ds = tf_dataset_train.map(lambda image_path, label: mx2tfrecords.mr_parse_function(image_path, label=label,
+                                                                                                   image_size=args.image_size[0],
+                                                                                seed=args.seed, normalize=False, do_resize=False,
+                                                                                do_random_crop=False, do_random_flip_up_down=False,
+                                                                                do_random_flip_left_right=True),
+                            num_parallel_calls=args.nrof_preprocess_threads)
+
+    print(':::::::::::::::::::::::::::::::: In Memory Cache Dataset Pipeline ::::::::::::::::::::::::::::::::')
+
+    tf_dataset_train = image_label_ds.cache()
+    image_count = len(image_list)
+    repeat_count = 1
+    # tf_dataset_train = tf_dataset_train.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=args.seed))
+    tf_dataset_train = tf_dataset_train.shuffle(buffer_size=image_count, seed=args.seed, reshuffle_each_iteration=True)
+    tf_dataset_train = tf_dataset_train.batch(args.batch_size).prefetch(buffer_size=args.nrof_preprocess_threads)
+
+    train_iterator = tf_dataset_train.make_initializable_iterator()
+    train_next_element = train_iterator.get_next()
+
+    # 2.2 prepare custom validate dataset
     ver_list = []
     ver_name_list = []
-    # for db in args.eval_datasets:
-    #     print('begin db %s convert.' % db)
-    #     data_set = load_bin(db, args.image_size, args)
-    #     ver_list.append(data_set)
-    #     ver_name_list.append(db)
+    print('begin db %s convert.' % args.eval_dataset)
+    # data_set = eval_data_reader.load_bin(db, args.image_size, args)
+    # image_array, actual_issame = eval_data_reader.load_eval_datasets(args)
+    data_set = eval_data_reader.load_eval_datasets(args)
+    ver_list.append(data_set)
+    ver_name_list.append(args.eval_dataset)
+
     # 3. define network, loss, optimize method, learning rate schedule, summary writer, saver
     # 3.1 inference phase
     w_init_method = tf.contrib.layers.xavier_initializer(uniform=False)
@@ -103,6 +127,7 @@ if __name__ == '__main__':
     test_net = L_Resnet_E_IR_fix_issue9.get_resnet(images, args.net_depth, type='ir', w_init=w_init_method, trainable=False, reuse=True,
                                                    keep_rate=dropout_rate)
     embedding_tensor = test_net.outputs
+    # embedding_tensor = net.outputs
     # 3.3 define the cross entropy
     inference_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logit, labels=labels))
     # inference_loss_avg = tf.reduce_mean(inference_loss)
@@ -129,8 +154,8 @@ if __name__ == '__main__':
     # 3.5 total losses
     total_loss = inference_loss + wd_loss
     # 3.6 define the learning rate schedule
-    p = int(512.0 / args.batch_size)
-    lr_steps = [p * val for val in args.lr_steps]
+    p = int(512.0/args.batch_size)
+    lr_steps = [p*val for val in args.lr_steps]
     print(lr_steps)
     lr = tf.train.piecewise_constant(global_step, boundaries=lr_steps, values=[0.001, 0.0005, 0.0003, 0.0001], name='lr_schedule')
     # 3.7 define the optimize method
@@ -172,7 +197,9 @@ if __name__ == '__main__':
     sess.run(tf.global_variables_initializer())
 
     restore_saver = tf.train.Saver()
-    restore_saver.restore(sess, '/home/aurora/workspaces2018/InsightFace_TF/output/ckpt/InsightFace_iter_1110000.ckpt')
+    if args.restore_path:
+        restore_saver.restore(sess, args.restore_path)
+
     # 4 begin iteration
     if not os.path.exists(args.log_file_path):
         os.makedirs(args.log_file_path)
@@ -183,19 +210,22 @@ if __name__ == '__main__':
     total_accuracy = {}
 
     for i in range(args.epoch):
-        sess.run(iterator.initializer)
+        # sess.run(iterator.initializer)
+        # Initialize train dataset
+        sess.run(train_iterator.initializer)
         while True:
             try:
-                images_train, labels_train = sess.run(next_element)
+                # images_train, labels_train = sess.run(next_element)
+                images_train, labels_train = sess.run(train_next_element)
                 feed_dict = {images: images_train, labels: labels_train, dropout_rate: 0.4}
                 feed_dict.update(net.all_drop)
                 start = time.time()
                 _, total_loss_val, inference_loss_val, wd_loss_val, _, acc_val = \
                     sess.run([train_op, total_loss, inference_loss, wd_loss, inc_op, acc],
-                             feed_dict=feed_dict,
-                             options=config_pb2.RunOptions(report_tensor_allocations_upon_oom=True))
+                              feed_dict=feed_dict,
+                              options=config_pb2.RunOptions(report_tensor_allocations_upon_oom=True))
                 end = time.time()
-                pre_sec = args.batch_size / (end - start)
+                pre_sec = args.batch_size/(end - start)
                 # print training information
                 if count > 0 and count % args.show_info_interval == 0:
                     print('epoch %d, total_step %d, total loss is %.2f , inference loss is %.2f, weight deacy '
@@ -218,25 +248,25 @@ if __name__ == '__main__':
 
                 # validate
                 if count > 0 and count % args.validate_interval == 0:
-                    feed_dict_test = {dropout_rate: 1.0}
+                    feed_dict_test ={dropout_rate: 1.0}
                     feed_dict_test.update(tl.utils.dict_to_one(net.all_drop))
-                    results = ver_test(ver_list=ver_list, ver_name_list=ver_name_list, nbatch=count, sess=sess,
-                                       embedding_tensor=embedding_tensor, batch_size=args.batch_size, feed_dict=feed_dict_test,
-                                       input_placeholder=images)
+                    results = verification.ver_test(ver_list=ver_list, ver_name_list=ver_name_list, nbatch=count, sess=sess,
+                             embedding_tensor=embedding_tensor, batch_size=args.batch_size, feed_dict=feed_dict_test,
+                             input_placeholder=images)
                     print('test accuracy is: ', str(results[0]))
                     total_accuracy[str(count)] = results[0]
-                    log_file.write('########' * 10 + '\n')
+                    log_file.write('########'*10+'\n')
                     log_file.write(','.join(list(total_accuracy.keys())) + '\n')
-                    log_file.write(','.join([str(val) for val in list(total_accuracy.values())]) + '\n')
+                    log_file.write(','.join([str(val) for val in list(total_accuracy.values())])+'\n')
                     log_file.flush()
                     if max(results) > 0.996:
                         print('best accuracy is %.5f' % max(results))
                         filename = 'InsightFace_iter_best_{:d}'.format(count) + '.ckpt'
                         filename = os.path.join(args.ckpt_path, filename)
                         saver.save(sess, filename)
-                        log_file.write('######Best Accuracy######' + '\n')
-                        log_file.write(str(max(results)) + '\n')
-                        log_file.write(filename + '\n')
+                        log_file.write('######Best Accuracy######'+'\n')
+                        log_file.write(str(max(results))+'\n')
+                        log_file.write(filename+'\n')
 
                         log_file.flush()
             except tf.errors.OutOfRangeError:
