@@ -1,0 +1,230 @@
+E:\Program\Anaconda3\envs\tf_gpu_1.12.0\python.exe "C:\Program Files\JetBrains\PyCharm 2018.3.5\helpers\pydev\pydevd.py" --multiproc --qt-support=auto --client 127.0.0.1 --port 52771 --file F:/Documents/JetBrains/PyCharm/OFR/InsightFace_TF/eval_ckpt_file.py
+pydev debugger: process 3476 is connecting
+
+Connected to pydev debugger (build 183.5912.18)
+begin db E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS+NIR_112 convert.
+loading images 1000
+(2, 1198, 112, 112, 3)
+  [TL] InputLayer  resnet_v1_50/input_layer: (?, 112, 112, 3)
+  [TL] Conv2dLayer resnet_v1_50/conv1: shape:[3, 3, 3, 64] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/bn0: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/prelu0: channel_shared:False
+  [TL] PoolLayer   resnet_v1_50/block1/unit_1/bottleneck_v1/shortcut: ksize:[1, 1, 1, 1] strides:[1, 2, 2, 1] padding:SAME pool:max_pool
+  [TL] BatchNormLayer resnet_v1_50/block1/unit_1/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block1/unit_1/bottleneck_v1/conv1: shape:[3, 3, 64, 64] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block1/unit_1/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block1/unit_1/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] PadLayer   resnet_v1_50/block1/unit_1/bottleneck_v1/padding_conv2: paddings:[[0, 0], [1, 1], [1, 1], [0, 0]] mode:CONSTANT
+  [TL] Conv2dLayer resnet_v1_50/block1/unit_1/bottleneck_v1/conv2: shape:[3, 3, 64, 64] strides:[1, 2, 2, 1] pad:VALID act:identity
+  [TL] BatchNormLayer resnet_v1_50/block1/unit_1/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block1/unit_1/bottleneck_v1/combine_layer: size:(?, 56, 56, 64) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block1/unit_2/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block1/unit_2/bottleneck_v1/conv1: shape:[3, 3, 64, 64] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block1/unit_2/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block1/unit_2/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block1/unit_2/bottleneck_v1/conv2: shape:[3, 3, 64, 64] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block1/unit_2/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block1/unit_2/bottleneck_v1/combine_layer: size:(?, 56, 56, 64) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block1/unit_3/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block1/unit_3/bottleneck_v1/conv1: shape:[3, 3, 64, 64] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block1/unit_3/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block1/unit_3/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block1/unit_3/bottleneck_v1/conv2: shape:[3, 3, 64, 64] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block1/unit_3/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block1/unit_3/bottleneck_v1/combine_layer: size:(?, 56, 56, 64) fn:add
+  [TL] Conv2dLayer resnet_v1_50/block2/unit_1/bottleneck_v1/shortcut_conv: shape:[1, 1, 64, 128] strides:[1, 2, 2, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_1/bottleneck_v1/shortcut_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_1/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block2/unit_1/bottleneck_v1/conv1: shape:[3, 3, 64, 128] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_1/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block2/unit_1/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] PadLayer   resnet_v1_50/block2/unit_1/bottleneck_v1/padding_conv2: paddings:[[0, 0], [1, 1], [1, 1], [0, 0]] mode:CONSTANT
+  [TL] Conv2dLayer resnet_v1_50/block2/unit_1/bottleneck_v1/conv2: shape:[3, 3, 128, 128] strides:[1, 2, 2, 1] pad:VALID act:identity
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_1/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block2/unit_1/bottleneck_v1/combine_layer: size:(?, 28, 28, 128) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_2/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block2/unit_2/bottleneck_v1/conv1: shape:[3, 3, 128, 128] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_2/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block2/unit_2/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block2/unit_2/bottleneck_v1/conv2: shape:[3, 3, 128, 128] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_2/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block2/unit_2/bottleneck_v1/combine_layer: size:(?, 28, 28, 128) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_3/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block2/unit_3/bottleneck_v1/conv1: shape:[3, 3, 128, 128] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_3/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block2/unit_3/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block2/unit_3/bottleneck_v1/conv2: shape:[3, 3, 128, 128] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_3/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block2/unit_3/bottleneck_v1/combine_layer: size:(?, 28, 28, 128) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_4/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block2/unit_4/bottleneck_v1/conv1: shape:[3, 3, 128, 128] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_4/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block2/unit_4/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block2/unit_4/bottleneck_v1/conv2: shape:[3, 3, 128, 128] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block2/unit_4/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block2/unit_4/bottleneck_v1/combine_layer: size:(?, 28, 28, 128) fn:add
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_1/bottleneck_v1/shortcut_conv: shape:[1, 1, 128, 256] strides:[1, 2, 2, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_1/bottleneck_v1/shortcut_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_1/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_1/bottleneck_v1/conv1: shape:[3, 3, 128, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_1/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_1/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] PadLayer   resnet_v1_50/block3/unit_1/bottleneck_v1/padding_conv2: paddings:[[0, 0], [1, 1], [1, 1], [0, 0]] mode:CONSTANT
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_1/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 2, 2, 1] pad:VALID act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_1/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_1/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_2/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_2/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_2/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_2/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_2/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_2/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_2/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_3/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_3/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_3/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_3/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_3/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_3/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_3/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_4/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_4/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_4/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_4/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_4/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_4/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_4/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_5/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_5/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_5/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_5/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_5/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_5/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_5/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_6/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_6/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_6/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_6/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_6/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_6/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_6/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_7/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_7/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_7/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_7/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_7/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_7/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_7/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_8/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_8/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_8/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_8/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_8/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_8/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_8/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_9/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_9/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_9/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_9/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_9/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_9/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_9/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_10/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_10/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_10/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_10/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_10/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_10/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_10/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_11/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_11/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_11/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_11/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_11/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_11/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_11/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_12/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_12/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_12/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_12/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_12/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_12/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_12/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_13/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_13/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_13/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_13/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_13/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_13/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_13/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_14/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_14/bottleneck_v1/conv1: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_14/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block3/unit_14/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block3/unit_14/bottleneck_v1/conv2: shape:[3, 3, 256, 256] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block3/unit_14/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block3/unit_14/bottleneck_v1/combine_layer: size:(?, 14, 14, 256) fn:add
+  [TL] Conv2dLayer resnet_v1_50/block4/unit_1/bottleneck_v1/shortcut_conv: shape:[1, 1, 256, 512] strides:[1, 2, 2, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block4/unit_1/bottleneck_v1/shortcut_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] BatchNormLayer resnet_v1_50/block4/unit_1/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block4/unit_1/bottleneck_v1/conv1: shape:[3, 3, 256, 512] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block4/unit_1/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block4/unit_1/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] PadLayer   resnet_v1_50/block4/unit_1/bottleneck_v1/padding_conv2: paddings:[[0, 0], [1, 1], [1, 1], [0, 0]] mode:CONSTANT
+  [TL] Conv2dLayer resnet_v1_50/block4/unit_1/bottleneck_v1/conv2: shape:[3, 3, 512, 512] strides:[1, 2, 2, 1] pad:VALID act:identity
+  [TL] BatchNormLayer resnet_v1_50/block4/unit_1/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block4/unit_1/bottleneck_v1/combine_layer: size:(?, 7, 7, 512) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block4/unit_2/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block4/unit_2/bottleneck_v1/conv1: shape:[3, 3, 512, 512] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block4/unit_2/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block4/unit_2/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block4/unit_2/bottleneck_v1/conv2: shape:[3, 3, 512, 512] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block4/unit_2/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block4/unit_2/bottleneck_v1/combine_layer: size:(?, 7, 7, 512) fn:add
+  [TL] BatchNormLayer resnet_v1_50/block4/unit_3/bottleneck_v1/conv1_bn1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] Conv2dLayer resnet_v1_50/block4/unit_3/bottleneck_v1/conv1: shape:[3, 3, 512, 512] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block4/unit_3/bottleneck_v1/conv1_bn2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] PReluLayer resnet_v1_50/block4/unit_3/bottleneck_v1/prelu_layer: channel_shared:False
+  [TL] Conv2dLayer resnet_v1_50/block4/unit_3/bottleneck_v1/conv2: shape:[3, 3, 512, 512] strides:[1, 1, 1, 1] pad:SAME act:identity
+  [TL] BatchNormLayer resnet_v1_50/block4/unit_3/bottleneck_v1/conv2_bn/BatchNorm: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ElementwiseLayer resnet_v1_50/block4/unit_3/bottleneck_v1/combine_layer: size:(?, 7, 7, 512) fn:add
+  [TL] BatchNormLayer resnet_v1_50/E_BN1: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+  [TL] ReshapeLayer resnet_v1_50/E_Reshapelayer: (?, 25088)
+  [TL] DenseLayer  resnet_v1_50/E_DenseLayer: 512 identity
+  [TL] BatchNormLayer resnet_v1_50/E_BN2: decay:0.900000 epsilon:0.000020 act:identity is_train:True
+WARNING:tensorflow:From F:\Documents\JetBrains\PyCharm\OFR\InsightFace_TF\losses\face_losses.py:20: calling norm (from tensorflow.python.ops.linalg_ops) with keep_dims is deprecated and will be removed in a future version.
+Instructions for updating:
+keep_dims is deprecated, use keepdims instead
+2019-04-01 12:46:24.517104: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX AVX2
+2019-04-01 12:46:25.251935: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1432] Found device 0 with properties: 
+name: GeForce GT 750M major: 3 minor: 0 memoryClockRate(GHz): 0.967
+pciBusID: 0000:01:00.0
+totalMemory: 2.00GiB freeMemory: 1.65GiB
+2019-04-01 12:46:25.265411: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1511] Adding visible gpu devices: 0
+2019-04-01 12:46:34.596277: I tensorflow/core/common_runtime/gpu/gpu_device.cc:982] Device interconnect StreamExecutor with strength 1 edge matrix:
+2019-04-01 12:46:34.597978: I tensorflow/core/common_runtime/gpu/gpu_device.cc:988]      0 
+2019-04-01 12:46:34.599014: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1001] 0:   N 
+2019-04-01 12:46:34.663550: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1115] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 1424 MB memory) -> physical GPU (device: 0, name: GeForce GT 750M, pci bus id: 0000:01:00.0, compute capability: 3.0)
+ckpt file 710000.ckpt restored!
+testing verification..
+2019-04-01 12:46:55.937134: W tensorflow/core/common_runtime/bfc_allocator.cc:211] Allocator (GPU_0_bfc) ran out of memory trying to allocate 882.00MiB. The caller indicates that this is not a failure, but may mean that there could be performance gains if more memory were available.
+2019-04-01 12:46:55.958981: W tensorflow/core/common_runtime/bfc_allocator.cc:211] Allocator (GPU_0_bfc) ran out of memory trying to allocate 780.38MiB. The caller indicates that this is not a failure, but may mean that there could be performance gains if more memory were available.
+2019-04-01 12:47:02.053371: W tensorflow/core/common_runtime/bfc_allocator.cc:211] Allocator (GPU_0_bfc) ran out of memory trying to allocate 1.20GiB. The caller indicates that this is not a failure, but may mean that there could be performance gains if more memory were available.
+2019-04-01 12:47:51.025496: W tensorflow/core/common_runtime/bfc_allocator.cc:211] Allocator (GPU_0_bfc) ran out of memory trying to allocate 1.12GiB. The caller indicates that this is not a failure, but may mean that there could be performance gains if more memory were available.
+(1198, 512)
+infer time 114.10953400000001
+best_threshold_index 100 0.9795918367346939
+best_threshold_index 100 0.9721706864564007
+best_threshold_index 100 0.974025974025974
+best_threshold_index 100 0.9721706864564007
+best_threshold_index 100 0.9703153988868275
+best_threshold_index 100 0.9721706864564007
+best_threshold_index 102 0.9721706864564007
+best_threshold_index 100 0.974025974025974
+best_threshold_index 100 0.9758812615955473
+best_threshold_index 100 0.9722222222222222
+[E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS+NIR_112][0]XNorm: 19.365762
+[E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS+NIR_112][0]Accuracy-Flip: 0.97164+-0.02241
+[[0.971638418079096]]
+
+Process finished with exit code 0

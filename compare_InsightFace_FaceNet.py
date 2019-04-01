@@ -1,20 +1,13 @@
 import tensorflow as tf
-import argparse
-# from data.eval_data_reader import load_bin
 from losses.face_losses import arcface_loss
-# from nets.L_Resnet_E_IR import get_resnet
 import tensorlayer as tl
-# from verification import ver_test
 import os
 from os.path import join
-
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 log_path = os.path.join(PROJECT_PATH, 'output')
 models_path = os.path.join(PROJECT_PATH, 'models')
-# train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\1024First_lfw_160'
-# eval_pairs_path = os.path.join(PROJECT_PATH, 'data/All_VIS_112_pairs_3.txt')
 
 
 from importlib.machinery import SourceFileLoader
@@ -26,18 +19,15 @@ L_Resnet_E_IR_fix_issue9 = SourceFileLoader('L_Resnet_E_IR_fix_issue9', os.path.
 face_losses = SourceFileLoader('face_losses', os.path.join(PROJECT_PATH, 'losses/face_losses.py')).load_module()
 eval_data_reader = SourceFileLoader('eval_data_reader', os.path.join(PROJECT_PATH, 'data/eval_data_reader.py')).load_module()
 verification = SourceFileLoader('verification', os.path.join(PROJECT_PATH, 'verification.py')).load_module()
-lfw = SourceFileLoader('lfw', os.path.join(PROJECT_PATH, 'lfw.py')).load_module()
 
 
 class Args:
     net_depth = 50
     epoch = 1000
-    batch_size = 32
     lr_steps = [40000, 60000, 80000]
     momentum = 0.9
     weight_decay = 5e-4
 
-    image_size = [112, 112]
     num_output = 85164
 
     # train_dataset_dir = train_dataset_path
@@ -63,20 +53,35 @@ class Args:
     eval_pair = os.path.join(PROJECT_PATH, 'data/First_100_ALL VIS_112_1.txt')
     eval_dataset = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_112"
 
+    image_size = 112
+    batch_size = 32
+
+    facenet_image_size = 160
+    facenet_dataset = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_160"
+    facenet_batch_size = batch_size
+    facenet_model = os.path.join(PROJECT_PATH, 'models/facenet/20180402-114759')
+    facenet_pairs = eval_pair
+
 
 if __name__ == '__main__':
     # args = get_args()
     args = Args()
 
+    # Read the file containing the pairs used for testing
     ver_list = []
     ver_name_list = []
     print('begin db %s convert.' % args.eval_dataset)
 
-    data_set = eval_data_reader.load_eval_datasets_2(args)
+    data_set = eval_data_reader.load_eval_datasets_2(args, facenet=False)
     ver_list.append(data_set)
     ver_name_list.append(args.eval_dataset)
 
-    images = tf.placeholder(name='img_inputs', shape=[None, *args.image_size, 3], dtype=tf.float32)
+    #  -------------------------------------------------------------------------------------------------------------------
+    print(f"{'='}"*40)
+
+    #  Evaluate custom dataset with InsightFace_TF pre-trained model
+    print("Evaluate custom dataset with InsightFace_TF pre-trained model")
+    images = tf.placeholder(name='img_inputs', shape=[None, args.image_size, args.image_size, 3], dtype=tf.float32)
     labels = tf.placeholder(name='img_labels', shape=[None, ], dtype=tf.int64)
     dropout_rate = tf.placeholder(name='dropout_rate', dtype=tf.float32)
 
@@ -103,4 +108,41 @@ if __name__ == '__main__':
                            input_placeholder=images)
         result_index.append(results)
     print(result_index)
+
+    tf.reset_default_graph()
+
+    #  -------------------------------------------------------------------------------------------------------------------
+    print(f"{'='}"*40)
+    
+    # Read the file containing the pairs used for testing
+    ver_list = []
+    ver_name_list = []
+    print('begin db %s convert.' % args.eval_dataset)
+
+    data_set = eval_data_reader.load_eval_datasets_2(args, facenet=True)
+    ver_list.append(data_set)
+    ver_name_list.append(args.eval_dataset)
+    
+    #  Evaluate custom dataset with facenet pre-trained model
+    print("Evaluate custom dataset with facenet pre-trained model")
+    with tf.Graph().as_default():
+
+        with tf.Session() as sess:
+            phase_train_placeholder = tf.placeholder(tf.bool, name='phase_train')
+
+            image_batch = tf.placeholder(name='img_inputs', shape=[None, args.facenet_image_size, args.facenet_image_size, 3], dtype=tf.float32)
+            label_batch = tf.placeholder(name='img_labels', shape=[None, ], dtype=tf.int32)
+
+            # Load the model
+            input_map = {'image_batch': image_batch, 'label_batch': label_batch, 'phase_train': phase_train_placeholder}
+            facenet.load_model(args.facenet_model, input_map=input_map)
+
+            # Get output tensor
+            embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
+
+            results = verification.ver_test(ver_list=ver_list, ver_name_list=ver_name_list, nbatch=0, sess=sess, embedding_tensor=embeddings,
+                                            batch_size=args.batch_size, feed_dict=input_map, input_placeholder=image_batch,
+                                            phase_train_placeholder=phase_train_placeholder)
+
+            print(results)
 

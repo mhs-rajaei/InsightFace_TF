@@ -96,12 +96,17 @@ def read_pairs_2(pairs_filename):
     return np.array(pairs)
 
 
-def get_paths_3(args):
-
-    # Read the file containing the pairs used for testing
-    pairs = read_pairs_2(os.path.expanduser(args.eval_pair))
-    # Get the paths for the corresponding images
-    path_list, issame_list = get_paths_2(os.path.expanduser(args.eval_dataset), pairs)
+def get_paths_3(args, facenet=False):
+    if facenet:
+        # Read the file containing the pairs used for testing
+        pairs = read_pairs_2(os.path.expanduser(args.facenet_pairs))
+        # Get the paths for the corresponding images
+        path_list, issame_list = get_paths_2(os.path.expanduser(args.facenet_dataset), pairs)
+    else:
+        # Read the file containing the pairs used for testing
+        pairs = read_pairs_2(os.path.expanduser(args.eval_pair))
+        # Get the paths for the corresponding images
+        path_list, issame_list = get_paths_2(os.path.expanduser(args.eval_dataset), pairs)
 
     return path_list, issame_list
 
@@ -271,11 +276,15 @@ def load_eval_datasets(args):
     return data, issame_list
 
 
-def load_eval_datasets_2(args):
+def load_eval_datasets_2(args, facenet=False):
     # bins, issame_list = pickle.load(open(os.path.join(args.eval_db_path, db_name+'.bin'), 'rb'), encoding='bytes')
-    image_path_list, issame_list = get_paths_3(args)
+    image_path_list, issame_list = get_paths_3(args, facenet=facenet)
     # data_list = []
-    data = np.zeros((2, len(issame_list)*2, args.image_size[0], args.image_size[1], 3), dtype=np.float32)
+    if facenet:
+        data = np.zeros((2, len(issame_list)*2, args.facenet_image_size, args.facenet_image_size, 3), dtype=np.float32)
+    else:
+        data = np.zeros((2, len(issame_list)*2, args.image_size, args.image_size, 3), dtype=np.float32)
+
     # for _ in [0,1]:
     #     data = np.zeros((len(issame_list)*2, args.image_size[0], args.image_size[1], 3), dtype=np.float32)
     #     data_list.append(data)

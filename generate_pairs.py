@@ -111,11 +111,11 @@ class GeneratePairs:
 
 
 if __name__ == '__main__':
-    data_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS+NIR_112"
-    eval_pairs_path = os.path.join(PROJECT_PATH, 'data/All VIS+NIR_112_pairs_6.txt')
+    data_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_112"
+    eval_pairs_path = os.path.join(PROJECT_PATH, 'data/First_100_ALL VIS_112_1.txt')
     pairs_filepath = eval_pairs_path
     # img_ext = ".jpg"
     img_ext = ".png"
-    generatePairs = GeneratePairs(data_dir, pairs_filepath, img_ext, num_random_images_per_folder=6)
+    generatePairs = GeneratePairs(data_dir, pairs_filepath, img_ext, num_random_images_per_folder=1)
     generatePairs.generate()
 

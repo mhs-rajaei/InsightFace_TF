@@ -31,8 +31,10 @@ import sklearn
 from scipy import interpolate
 import datetime
 import mxnet as mx
-
+from sklearn import metrics
 import os
+
+
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 from importlib.machinery import SourceFileLoader
 lfw = SourceFileLoader('lfw', os.path.join(PROJECT_PATH, 'lfw.py')).load_module()
@@ -189,7 +191,7 @@ def data_iter(datasets, batch_size):
         yield datasets[i:min(i+batch_size, data_num), ...]
 
 
-def test(data_set, sess, embedding_tensor, batch_size, label_shape=None, feed_dict=None, input_placeholder=None):
+def test(data_set, sess, embedding_tensor, batch_size, label_shape=None, feed_dict=None, input_placeholder=None, phase_train_placeholder=None):
     '''
     referenc official implementation [insightface](https://github.com/deepinsight/insightface)
     :param data_set:
@@ -214,9 +216,17 @@ def test(data_set, sess, embedding_tensor, batch_size, label_shape=None, feed_di
             data_tmp = data.copy()    # fix issues #4
             data_tmp -= 127.5
             data_tmp *= 0.0078125
-            feed_dict[input_placeholder] = data_tmp
+
             time0 = datetime.datetime.now()
-            _embeddings = sess.run(embedding_tensor, feed_dict)
+
+            if phase_train_placeholder is not None:
+                mr_feed_dict = {input_placeholder : data_tmp, phase_train_placeholder: False}
+                _embeddings = sess.run(embedding_tensor, mr_feed_dict)
+            else:
+                feed_dict[input_placeholder] = data_tmp
+                time0 = datetime.datetime.now()
+                _embeddings = sess.run(embedding_tensor, feed_dict)
+
             time_now = datetime.datetime.now()
             diff = time_now - time0
             time_consumed += diff.total_seconds()
@@ -247,24 +257,35 @@ def test(data_set, sess, embedding_tensor, batch_size, label_shape=None, feed_di
     embeddings = sklearn.preprocessing.normalize(embeddings)
     print(embeddings.shape)
     print('infer time', time_consumed)
-    _, _, accuracy, val, val_std, far = evaluate(embeddings, issame_list, nrof_folds=10)
+    tpr, fpr, accuracy, val, val_std, far = evaluate(embeddings, issame_list, nrof_folds=10)
     acc2, std2 = np.mean(accuracy), np.std(accuracy)
 
-    # _, _, accuracy_lfw, val_lfw, val_std_lfw, far_lfw = lfw.evaluate(embeddings, issame_list, nrof_folds=10, distance_metric=0,
-    #                                                  subtract_mean=False)
-    # print(f"accuracy_lfw {accuracy_lfw}, val_lfw: {val_lfw}, val_std_lfw: {val_std_lfw}, far_lfw: {far_lfw}")
-    #
-    # print('accuracy_lfw: %2.5f+-%2.5f' % (np.mean(accuracy_lfw), np.std(accuracy_lfw)))
-    # print('val_lfw rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val_lfw, val_std_lfw, far_lfw))
+    auc = metrics.auc(fpr, tpr)
+    print('TPR: ', np.mean(tpr), 'FPR: ', np.mean(fpr))
+    print('Area Under Curve (AUC): %1.3f' % auc)
+
+    tpr_lfw, fpr_lfw, accuracy_lfw, val_lfw, val_std_lfw, far_lfw = lfw.evaluate(embeddings, issame_list, nrof_folds=10, distance_metric=0,
+                                                     subtract_mean=False)
+
+    print('accuracy_lfw: %2.5f+-%2.5f' % (np.mean(accuracy_lfw), np.std(accuracy_lfw)))
+    print(f"val_lfw: {val_lfw}, val_std_lfw: {val_std_lfw}, far_lfw: {far_lfw}")
+
+    print('val_lfw rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val_lfw, val_std_lfw, far_lfw))
+    auc_lfw = metrics.auc(fpr_lfw, tpr_lfw)
+    print('TPR_LFW:', np.mean(tpr_lfw), 'FPR_LFW: ', np.mean(fpr_lfw))
+
+    print('Area Under Curve LFW (AUC): %1.3f' % auc_lfw)
+
     return acc1, std1, acc2, std2, _xnorm, embeddings_list
 
 
-def ver_test(ver_list, ver_name_list, nbatch, sess, embedding_tensor, batch_size, feed_dict, input_placeholder):
+def ver_test(ver_list, ver_name_list, nbatch, sess, embedding_tensor, batch_size, feed_dict, input_placeholder, phase_train_placeholder=None):
     results = []
     for i in range(len(ver_list)):
         acc1, std1, acc2, std2, xnorm, embeddings_list = test(data_set=ver_list[i], sess=sess, embedding_tensor=embedding_tensor,
                                                               batch_size=batch_size, feed_dict=feed_dict,
-                                                              input_placeholder=input_placeholder)
+                                                              input_placeholder=input_placeholder,
+                                                              phase_train_placeholder=phase_train_placeholder)
         print('[%s][%d]XNorm: %f' % (ver_name_list[i], nbatch, xnorm))
         print('[%s][%d]Accuracy-Flip: %1.5f+-%1.5f' % (ver_name_list[i], nbatch, acc2, std2))
         results.append(acc2)
