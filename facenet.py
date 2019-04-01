@@ -177,22 +177,22 @@ def timeit(ds, BATCH_SIZE, repeat_count=1):
 
 def triplet_loss(anchor, positive, negative, alpha):
     """Calculate the triplet loss according to the FaceNet paper
-    
+
     Args:
       anchor: the embeddings for the anchor images.
       positive: the embeddings for the positive images.
       negative: the embeddings for the negative images.
-  
+
     Returns:
       the triplet loss according to the FaceNet paper as a float tensor.
     """
     with tf.variable_scope('triplet_loss'):
         pos_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, positive)), 1)
         neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)), 1)
-        
+
         basic_loss = tf.add(tf.subtract(pos_dist,neg_dist), alpha)
         loss = tf.reduce_mean(tf.maximum(basic_loss, 0.0), 0)
-      
+
     return loss
 
 
@@ -250,8 +250,6 @@ RANDOM_CROP = 2
 RANDOM_FLIP = 4
 FIXED_STANDARDIZATION = 8
 FLIP = 16
-
-
 def create_input_pipeline(input_queue, image_size, nrof_preprocess_threads, batch_size_placeholder):
     with tf.name_scope(name='Input_PipeLine'):
         images_and_labels_list = []
@@ -296,10 +294,10 @@ def get_control_flag(control, field):
 
 def _add_loss_summaries(total_loss):
     """Add summaries for losses.
-  
+
     Generates moving average for all losses and associated summaries for
     visualizing the performance of the network.
-  
+
     Args:
       total_loss: Total loss from loss().
     Returns:
@@ -309,7 +307,7 @@ def _add_loss_summaries(total_loss):
     loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
     losses = tf.get_collection('losses')
     loss_averages_op = loss_averages.apply(losses + [total_loss])
-  
+
     # Attach a scalar summmary to all individual losses and the total loss; do the
     # same for the averaged version of the losses.
     for l in losses + [total_loss]:
@@ -317,7 +315,7 @@ def _add_loss_summaries(total_loss):
         # as the original loss name.
         tf.summary.scalar(l.op.name +' (raw)', l)
         tf.summary.scalar(l.op.name, loss_averages.average(l))
-  
+
     return loss_averages_op
 
 
@@ -339,31 +337,31 @@ def train(total_loss, global_step, optimizer, learning_rate, moving_average_deca
             opt = tf.train.MomentumOptimizer(learning_rate, 0.9, use_nesterov=True)
         else:
             raise ValueError('Invalid optimization algorithm')
-    
+
         grads = opt.compute_gradients(total_loss, update_gradient_vars)
-        
+
     # Apply gradients.
     apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
-  
+
     # Add histograms for trainable variables.
     if log_histograms:
         for var in tf.trainable_variables():
             tf.summary.histogram(var.op.name, var)
-   
+
     # Add histograms for gradients.
     if log_histograms:
         for grad, var in grads:
             if grad is not None:
                 tf.summary.histogram(var.op.name + '/gradients', grad)
-  
+
     # Track the moving averages of all trainable variables.
     variable_averages = tf.train.ExponentialMovingAverage(
         moving_average_decay, global_step)
     variables_averages_op = variable_averages.apply(tf.trainable_variables())
-  
+
     with tf.control_dependencies([apply_gradient_op, variables_averages_op]):
         train_op = tf.no_op(name='train')
-  
+
     return train_op
 
 
@@ -372,7 +370,7 @@ def prewhiten(x):
     std = np.std(x)
     std_adj = np.maximum(std, 1.0/np.sqrt(x.size))
     y = np.multiply(np.subtract(x, mean), 1/std_adj)
-    return y  
+    return y
 
 
 def reduce_var(x, axis=None, keepdims=False):
@@ -534,16 +532,19 @@ class ImageClass():
     def __init__(self, name, image_paths):
         self.name = name
         self.image_paths = image_paths
-  
+
     def __str__(self):
         return self.name + ', ' + str(len(self.image_paths)) + ' images'
-  
+
     def __len__(self):
         return len(self.image_paths)
 
 
 def load_and_preprocess_image(image_path, label=None, image_size=192, seed=313, normalize=True, do_resize=False, do_random_crop=False,
-                                do_random_flip=False, do_prewhiten=True):
+                              flip_left_right=False, do_random_flip_left_right=False, do_random_flip_up_down=False, do_prewhiten=True,
+                              to_GRAY=False, to_RGB=False, random_rotate=False, fixed_standardization=False, random_hue=False,
+                              random_saturation=False, random_brightness=False, random_contrast=False):
+
     image_string = tf.read_file(image_path)
     # img = tf.image.decode_image(image_string)
 
@@ -551,24 +552,66 @@ def load_and_preprocess_image(image_path, label=None, image_size=192, seed=313, 
         lambda: tf.image.decode_jpeg(image_string, channels=3),
         lambda: tf.image.decode_png(image_string, channels=3))
 
+    if to_GRAY:
+        img = tf.image.rgb_to_grayscale(img)
+
+    if to_RGB:
+        image_rgb = tf.cond(tf.rank(img) < 4,
+                            lambda: tf.image.grayscale_to_rgb(tf.expand_dims(img, -1)),
+                            lambda: tf.identity(img))
+        # Add shape information
+        s = img.shape
+        image_rgb.set_shape(s)
+        # if len(s) is not None and len(s) < 4:
+        if s.ndims is not None and s.ndims < 4:
+            image_rgb.set_shape(s.concatenate(3))
+        img = image_rgb
+
     if do_prewhiten:
         img = tf_prewhiten(img)
 
     # https://www.tensorflow.org/api_guides/python/image
     if do_random_crop:
+        random_size = tf.random.uniform(shape=1, minval=0, maxval=image_size)
+        img = tf.random_crop(img, random_size)
+        img = tf.image.resize_image_with_crop_or_pad(img, img[0], img[1])
         # A random variable
         rand_var = tf.random_uniform([], minval=0, maxval=0.5, dtype=tf.float32, seed=seed)
         img = tf.image.central_crop(img, central_fraction=rand_var)
-    if do_random_flip:
+
+    if flip_left_right:
+        img = tf.image.flip_left_right(img)
+    if do_random_flip_left_right:
+        img = tf.image.random_flip_left_right(img, seed=seed)
+
+    if do_random_flip_up_down:
         img = tf.image.random_flip_up_down(img, seed=seed)
 
-    # img = tf.convert_to_tensor(img, np.float32)
     if do_resize:
         img = tf.image.resize_images(img, [image_size, image_size])
     if normalize:
         tf.divide(tf.cast(img, dtype=tf.float32), tf.constant(255.0, dtype=tf.float32)) # normalize to [0,1] range
+    if random_rotate:
+        random_angles = tf.random.uniform(shape=(tf.shape(img)[0],), minval=-np.pi / 4, maxval=np.pi / 4)
+        tf.contrib.image.rotate(img, angles=random_angles, interpolation='NEAREST')
+
+    if fixed_standardization:
+        img = (tf.cast(img, tf.float32) - 127.5) / 128.0
+        img = tf.image.per_image_standardization(img)
+
+    # Color
+    if random_hue:
+        img = tf.image.random_hue(img, 0.08)
+    if random_saturation:
+        img = tf.image.random_saturation(img, 0.6, 1.6)
+    if random_brightness:
+        img = tf.image.random_brightness(img, 0.05)
+    if random_contrast:
+        img = tf.image.random_contrast(img, 0.7, 1.3)
+
     if label is not None:
         return img, label
+
     return img
 
 
@@ -582,9 +625,9 @@ def preprocess_image(image, dim=96):
     return image
 
 
-def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, image_size=96, method='cache', BATCH_SIZE=32,
+def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, image_size=96, method='cache_slices', BATCH_SIZE=32,
                    seed=313, performance=False, repeat_count=1, path=None, in_memory = True, normalize=True, do_resize=False,
-                   do_random_crop=False, do_random_flip=False, do_prewhiten=False):
+                   do_random_crop=False, do_random_flip=False, do_random_flip_up_down=False, do_prewhiten=False, shuffle=True):
     """
 
     :param image_list:
@@ -595,6 +638,16 @@ def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, 
     :param BATCH_SIZE:
     :param seed:
     :param performance:
+    :param repeat_count:
+    :param path:
+    :param in_memory:
+    :param normalize:
+    :param do_resize:
+    :param do_random_crop:
+    :param do_random_flip:
+    :param do_random_flip_up_down:
+    :param do_prewhiten:
+    :param shuffle:
     :return:
     """
     if path:
@@ -646,21 +699,25 @@ def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, 
     image_count = len(image_list)
     print(f'image_count: {image_count}')
     # Using the from_tensor_slices method we can build a dataset of labels
-    label_ds = tf.data.Dataset.from_tensor_slices(tf.cast(label_list, tf.int64))
+    # label_ds = tf.data.Dataset.from_tensor_slices(tf.cast(label_list, tf.int64))
 
     if method == 'slices':
         # Note: When you have arrays like all_image_labels and all_image_paths an alternative to tf.data.dataset.Dataset.zip is to
         # slice the pair of arrays.
         ds = tf.data.Dataset.from_tensor_slices((image_list, label_list))
-        image_label_ds = ds.map(lambda image_path, label: load_and_preprocess_image(image_path, label=label, image_size=image_size,
-                                                                                      seed=seed, normalize=normalize, do_resize=do_resize,
-                                                                                      do_random_crop=do_random_crop, do_random_flip=do_random_flip,
-                                                                                      do_prewhiten=do_prewhiten),
-                               num_parallel_calls=nrof_preprocess_threads)
+        image_label_ds = \
+            ds.map(
+                lambda image_path, label: load_and_preprocess_image(
+                image_path, label=label, image_size=image_size, seed=seed, normalize=normalize, do_resize=do_resize,
+                do_random_crop=do_random_crop, do_random_flip_left_right=do_random_flip, do_random_flip_up_down=do_random_flip_up_down,
+                do_prewhiten=do_prewhiten),
+            num_parallel_calls=nrof_preprocess_threads)
+
         # Setting a shuffle buffer size as large as the dataset ensures that the data is
         # completely shuffled.
         # ds = image_label_ds.shuffle(buffer_size=image_count)
-        ds = image_label_ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
+        if shuffle:
+            ds = image_label_ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
         ds = ds.batch(BATCH_SIZE).prefetch(buffer_size=nrof_preprocess_threads)
         # ds = ds.batch(BATCH_SIZE)
         # # `prefetch` lets the dataset fetch batches, in the background while the model is training.
@@ -681,16 +738,18 @@ def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, 
         # slice the pair of arrays.
         ds = tf.data.Dataset.from_tensor_slices((image_list, label_list))
         # Now create a new dataset that loads and formats images on the fly by mapping preprocess_image over the dataset of paths.
-        image_label_ds = ds.map(lambda image_path, label: load_and_preprocess_image(image_path, label=label, image_size=image_size,
-                                                                                      seed=seed, normalize=normalize, do_resize=do_resize,
-                                                                                      do_random_crop=do_random_crop, do_random_flip=do_random_flip,
-                                                                                      do_prewhiten=do_prewhiten),
-                               num_parallel_calls=nrof_preprocess_threads)
+        image_label_ds = \
+            ds.map(
+                lambda image_path, label: load_and_preprocess_image(
+                    image_path, label=label, image_size=image_size,seed=seed, normalize=normalize, do_resize=do_resize, do_random_crop=do_random_crop,
+                    do_random_flip_left_right=do_random_flip, do_random_flip_up_down=do_random_flip_up_down, do_prewhiten=do_prewhiten),
+            num_parallel_calls=nrof_preprocess_threads)
 
         if in_memory:
             print('::::::::::::::::::::::::::::::::in memory cache::::::::::::::::::::::::::::::::')
             ds = image_label_ds.cache()
-            ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
+            if shuffle:
+                ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
             ds = ds.batch(BATCH_SIZE).prefetch(buffer_size=nrof_preprocess_threads)
             if performance:
                 timeit(ds, BATCH_SIZE, repeat_count)
@@ -702,7 +761,9 @@ def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, 
             print('::::::::::::::::::::::::::::::::in disk cache::::::::::::::::::::::::::::::::')
             # If the data doesn't fit in memory, use a cache file:
             ds = image_label_ds.cache(filename='./cache.tf-data')
-            ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
+            if shuffle:
+                ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
+
             ds = ds.batch(BATCH_SIZE).prefetch(nrof_preprocess_threads)
             if performance:
                 timeit(ds, BATCH_SIZE, repeat_count)
@@ -711,7 +772,7 @@ def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, 
         return ds
 
 
-def get_dataset(path, has_class_directories=True, nrof_preprocess_threads=4):
+def get_dataset(path):
 
     dataset = []
     path_exp = os.path.expanduser(path)
@@ -724,7 +785,7 @@ def get_dataset(path, has_class_directories=True, nrof_preprocess_threads=4):
         facedir = os.path.join(path_exp, class_name)
         image_paths = get_image_paths(facedir)
         dataset.append(ImageClass(class_name, image_paths))
-  
+
     return dataset
 
 
@@ -737,14 +798,14 @@ def get_image_paths(facedir):
 
 
 def split_dataset(dataset, split_ratio, min_nrof_images_per_class, mode):
-    if mode=='SPLIT_CLASSES':
+    if mode == 'SPLIT_CLASSES':
         nrof_classes = len(dataset)
         class_indices = np.arange(nrof_classes)
         np.random.shuffle(class_indices)
         split = int(round(nrof_classes*(1-split_ratio)))
         train_set = [dataset[i] for i in class_indices[0:split]]
         test_set = [dataset[i] for i in class_indices[split:-1]]
-    elif mode=='SPLIT_IMAGES':
+    elif mode == 'SPLIT_IMAGES':
         train_set = []
         test_set = []
         for cls in dataset:
@@ -778,10 +839,10 @@ def load_model(model, input_map=None):
     else:
         print('Model directory: %s' % model_exp)
         meta_file, ckpt_file = get_model_filenames(model_exp)
-        
+
         print('Metagraph file: %s' % meta_file)
         print('Checkpoint file: %s' % ckpt_file)
-      
+
         saver = tf.train.import_meta_graph(os.path.join(model_exp, meta_file), input_map=input_map)
         saver.restore(tf.get_default_session(), os.path.join(model_exp, ckpt_file))
 
@@ -823,8 +884,8 @@ def distance(embeddings1, embeddings2, distance_metric=0):
         similarity = dot / norm
         dist = np.arccos(similarity) / math.pi
     else:
-        raise 'Undefined distance metric %d' % distance_metric 
-        
+        raise 'Undefined distance metric %d' % distance_metric
+
     return dist
 
 
@@ -834,20 +895,20 @@ def calculate_roc(thresholds, embeddings1, embeddings2, actual_issame, nrof_fold
     nrof_pairs = min(len(actual_issame), embeddings1.shape[0])
     nrof_thresholds = len(thresholds)
     k_fold = KFold(n_splits=nrof_folds, shuffle=False)
-    
+
     tprs = np.zeros((nrof_folds,nrof_thresholds))
     fprs = np.zeros((nrof_folds,nrof_thresholds))
     accuracy = np.zeros((nrof_folds))
-    
+
     indices = np.arange(nrof_pairs)
-    
+
     for fold_idx, (train_set, test_set) in enumerate(k_fold.split(indices)):
         if subtract_mean:
             mean = np.mean(np.concatenate([embeddings1[train_set], embeddings2[train_set]]), axis=0)
         else:
           mean = 0.0
         dist = distance(embeddings1-mean, embeddings2-mean, distance_metric)
-        
+
         # Find the best threshold for the fold
         acc_train = np.zeros((nrof_thresholds))
         for threshold_idx, threshold in enumerate(thresholds):
@@ -856,7 +917,7 @@ def calculate_roc(thresholds, embeddings1, embeddings2, actual_issame, nrof_fold
         for threshold_idx, threshold in enumerate(thresholds):
             tprs[fold_idx,threshold_idx], fprs[fold_idx,threshold_idx], _ = calculate_accuracy(threshold, dist[test_set], actual_issame[test_set])
         _, _, accuracy[fold_idx] = calculate_accuracy(thresholds[best_threshold_index], dist[test_set], actual_issame[test_set])
-          
+
         tpr = np.mean(tprs,0)
         fpr = np.mean(fprs,0)
     return tpr, fpr, accuracy
@@ -868,7 +929,7 @@ def calculate_accuracy(threshold, dist, actual_issame):
     fp = np.sum(np.logical_and(predict_issame, np.logical_not(actual_issame)))
     tn = np.sum(np.logical_and(np.logical_not(predict_issame), np.logical_not(actual_issame)))
     fn = np.sum(np.logical_and(np.logical_not(predict_issame), actual_issame))
-  
+
     tpr = 0 if (tp+fn==0) else float(tp) / float(tp+fn)
     fpr = 0 if (fp+tn==0) else float(fp) / float(fp+tn)
     acc = float(tp+tn)/dist.size
@@ -881,19 +942,19 @@ def calculate_val(thresholds, embeddings1, embeddings2, actual_issame, far_targe
     nrof_pairs = min(len(actual_issame), embeddings1.shape[0])
     nrof_thresholds = len(thresholds)
     k_fold = KFold(n_splits=nrof_folds, shuffle=False)
-    
+
     val = np.zeros(nrof_folds)
     far = np.zeros(nrof_folds)
-    
+
     indices = np.arange(nrof_pairs)
-    
+
     for fold_idx, (train_set, test_set) in enumerate(k_fold.split(indices)):
         if subtract_mean:
             mean = np.mean(np.concatenate([embeddings1[train_set], embeddings2[train_set]]), axis=0)
         else:
           mean = 0.0
         dist = distance(embeddings1-mean, embeddings2-mean, distance_metric)
-      
+
         # Find the threshold that gives FAR = far_target
         far_train = np.zeros(nrof_thresholds)
         for threshold_idx, threshold in enumerate(thresholds):
@@ -903,9 +964,9 @@ def calculate_val(thresholds, embeddings1, embeddings2, actual_issame, far_targe
             threshold = f(far_target)
         else:
             threshold = 0.0
-    
+
         val[fold_idx], far[fold_idx] = calculate_val_far(threshold, dist[test_set], actual_issame[test_set])
-  
+
     val_mean = np.mean(val)
     far_mean = np.mean(far)
     val_std = np.std(val)

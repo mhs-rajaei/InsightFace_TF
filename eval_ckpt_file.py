@@ -16,7 +16,7 @@ models_path = os.path.join(PROJECT_PATH, 'models')
 # train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\1024First_lfw_160'
 # train_dataset_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_train'
 # eval_dir_path = r'F:\Documents\JetBrains\PyCharm\OFR\images\200END_lfw_160_test_Copy'
-# eval_pairs_path = os.path.join(PROJECT_PATH, 'data/pairs.txt')
+eval_pairs_path = os.path.join(PROJECT_PATH, 'data/All_VIS_112_pairs_3')
 
 
 from importlib.machinery import SourceFileLoader
@@ -74,13 +74,11 @@ class Args:
     show_info_interval = 1
     seed = 313
     nrof_preprocess_threads = 4
-    restore_path = r'F:\Documents\JetBrains\PyCharm\OFR\InsightFace_TF\output\ckpt\model_d'
 
     ckpt_file = r'F:\Documents\JetBrains\PyCharm\OFR\InsightFace_TF\output\ckpt\model_d\InsightFace_iter_best_'
     ckpt_index_list = ['710000.ckpt']
 
-    eval_pair = r'F:\Documents\JetBrains\PyCharm\OFR\original_facenet\data\All_VIS_112_pairs_3.txt'
-    # eval_pair = eval_pairs_path
+    eval_pair = eval_pairs_path
     # eval_dataset = eval_dir_path
     eval_dataset = r'E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS_112'
 
