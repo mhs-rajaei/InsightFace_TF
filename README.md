@@ -2,9 +2,16 @@
 ### My Changes
 #### Thanks Chen Wei, David Sandberg, Victor Zhang and many other peoples.
 ##### Removing of tfrecords and adding my parser for loading raw 'jpeg' or 'png' images.
-##### Custom validation dataset and custom 'pairs.txt' creation from 'https://github.com/VictorZhang2014/facenet/blob/master/mydata/generate_pairs.py' (I corrected some bugs of this code).
-##### Ready for use in google colab (you must upload your code and some line of code, use this link for help: 'https://zerowithdot.com/colab-workspace/').
+##### Custom validation dataset and custom 'pairs.txt' creation from [here](https://github.com/VictorZhang2014/facenet/blob/master/mydata/generate_pairs.py) (I corrected some bugs of this code).
+##### Ready for use in google colab (you must upload your code, model, etc. Use this link for help: [here](https://zerowithdot.com/colab-workspace).
 ##### ArgParse removed and Class Args added.
+
+### Restoring ckpt (Pre-trainde model) and validate this model on custom dataset
+* Download pre-trained weights of model d, you can download this model from [google drive](https://drive.google.com/open?id=19PbuQP2wDn-vXfNfc4HFPSE1rZNG18VG).
+* In following and in each step, add currect path to class Args.
+* Allign your custom dataset with [align_dataset_mtcnn.py](https://github.com/mhs-rajaei/InsightFace_TF/blob/master/align/align_dataset_mtcnn.py).
+* Generate 'pairs.txt' with ['generate_pairs.py'](https://github.com/mhs-rajaei/InsightFace_TF/blob/master/generate_pairs.py).
+* Use ['eval_ckpt_file.py'](https://github.com/mhs-rajaei/InsightFace_TF/blob/master/eval_ckpt_file.py).
 
 
 #### Tasks

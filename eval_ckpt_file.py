@@ -31,22 +31,6 @@ verification = SourceFileLoader('verification', os.path.join(PROJECT_PATH, 'veri
 lfw = SourceFileLoader('lfw', os.path.join(PROJECT_PATH, 'lfw.py')).load_module()
 
 
-def get_args():
-    parser = argparse.ArgumentParser(description='input information')
-    parser.add_argument('--ckpt_file', default=r'F:\Documents\JetBrains\PyCharm\OFR\InsightFace_TF\output\ckpt\model_c\InsightFace_iter_best_',
-                       type=str, help='the ckpt file path')
-    # parser.add_argument('--eval_dataset', default=['lfw', 'cfp_ff', 'cfp_fp', 'agedb_30'], help='evluation datasets')
-    parser.add_argument('--eval_dataset', default=['agedb_30'], help='evluation datasets')
-    parser.add_argument('--eval_db_path', default='./datasets/faces_ms1m_112x112', help='evluate datasets base path')
-    parser.add_argument('--image_size', default=[160, 160], help='the image size')
-    parser.add_argument('--net_depth', default=50, help='resnet depth, default is 50')
-    parser.add_argument('--num_output', default=85164, help='the image size')
-    parser.add_argument('--batch_size', default=32, help='batch size to train network')
-    parser.add_argument('--ckpt_index_list',
-                        default=['1950000.ckpt'], help='ckpt file indexes')
-    args = parser.parse_args()
-    return args
-
 class Args:
     net_depth = 50
     epoch = 1000
