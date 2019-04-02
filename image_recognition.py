@@ -83,12 +83,10 @@ def data_iter(datasets, batch_size):
 
 def get_facenet_embeddings(args):
     # Read the file containing the pairs used for testing
-    # ver_list = []
     ver_name_list = []
     print('begin db %s convert.' % args.facenet_dataset)
 
     data_set = eval_data_reader.load_eval_datasets_2(args, facenet=True)
-    # ver_list.append(data_set)
     ver_name_list.append(args.facenet_dataset)
 
     #  Evaluate custom dataset with facenet pre-trained model
@@ -107,22 +105,9 @@ def get_facenet_embeddings(args):
             # Get output tensor
             embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
 
-            # results = verification.ver_test(ver_list=ver_list, ver_name_list=ver_name_list, nbatch=0, sess=sess, embedding_tensor=embeddings,
-            #                                 batch_size=args.batch_size, feed_dict=input_map, input_placeholder=image_batch,
-            #                                 phase_train_placeholder=phase_train_placeholder)
-
-            # results = []
-            # for i in range(len(ver_list)):
-            # acc1, std1, acc2, std2, xnorm, embeddings_list = test(data_set=ver_list[i], sess=sess, embedding_tensor=embedding_tensor,
-            #                                                       batch_size=batch_size, feed_dict=feed_dict,
-            #                                                       input_placeholder=input_placeholder,
-            #                                                       phase_train_placeholder=phase_train_placeholder)
-
             batch_size = args.batch_size
             input_placeholder = image_batch
 
-            # data_set = ver_list[0]
-            # feed_dict = input_map
             print('testing verification..')
             data_list = data_set[0]
             issame_list = data_set[1]
@@ -131,7 +116,6 @@ def get_facenet_embeddings(args):
             for i in range(len(data_list)):
                 datas = data_list[i]
                 embeddings_array = None
-                # feed_dict.setdefault(input_placeholder, None)
                 for idx, data in enumerate(data_iter(datas, batch_size)):
                     data_tmp = data.copy()  # fix issues #4
                     data_tmp -= 127.5
@@ -139,13 +123,8 @@ def get_facenet_embeddings(args):
 
                     time0 = datetime.datetime.now()
 
-                    # if phase_train_placeholder is not None:
                     mr_feed_dict = {input_placeholder: data_tmp, phase_train_placeholder: False}
                     _embeddings = sess.run(embeddings, mr_feed_dict)
-                    # else:
-                    #     feed_dict[input_placeholder] = data_tmp
-                    #     time0 = datetime.datetime.now()
-                    #     _embeddings = sess.run(embeddings, feed_dict)
 
                     time_now = datetime.datetime.now()
                     diff = time_now - time0
@@ -173,24 +152,17 @@ def get_facenet_embeddings(args):
             _xnorm /= _xnorm_cnt
 
             final_embeddings_output = embeddings_list[0] + embeddings_list[1]
-            # final_embeddings_output_copy = embeddings_list_copy[0] + embeddings_list_copy[1]
             final_embeddings_output = sklearn.preprocessing.normalize(final_embeddings_output)
-            # final_embeddings_output_copy = sklearn.preprocessing.normalize(final_embeddings_output_copy)
             print(final_embeddings_output.shape)
-            # print(final_embeddings_output_copy.shape)
 
             return embeddings_list, final_embeddings_output, _xnorm
 
 
 def get_insightface_embeddings(args):
     # Read the file containing the pairs used for testing
-    # ver_list = []
-    # ver_name_list = []
     print('begin db %s convert.' % args.insightface_dataset)
 
     data_set = eval_data_reader.load_eval_datasets_2(args, facenet=False)
-    # ver_list.append(data_set)
-    # ver_name_list.append(args.insightface_dataset)
 
     #  Evaluate custom dataset with InsightFace_TF pre-trained model
     print("Evaluate custom dataset with InsightFace_TF pre-trained model")
@@ -208,8 +180,6 @@ def get_insightface_embeddings(args):
     sess = tf.Session()
     saver = tf.train.Saver()
 
-    # result_index = []
-    # for file_index in args.ckpt_index_list:
     feed_dict_test = {}
     path = args.ckpt_file + args.ckpt_index_list[0]
     saver.restore(sess, path)
@@ -217,22 +187,9 @@ def get_insightface_embeddings(args):
     feed_dict_test.update(tl.utils.dict_to_one(net.all_drop))
     feed_dict_test[dropout_rate] = 1.0
 
-    # results = verification.ver_test(ver_list=ver_list, ver_name_list=ver_name_list, nbatch=0, sess=sess, embedding_tensor=embeddings,
-    #                                 batch_size=args.batch_size, feed_dict=input_map, input_placeholder=image_batch,
-    #                                 phase_train_placeholder=phase_train_placeholder)
-
-    # results = []
-    # for i in range(len(ver_list)):
-    # acc1, std1, acc2, std2, xnorm, embeddings_list = test(data_set=ver_list[i], sess=sess, embedding_tensor=embedding_tensor,
-    #                                                       batch_size=batch_size, feed_dict=feed_dict,
-    #                                                       input_placeholder=input_placeholder,
-    #                                                       phase_train_placeholder=phase_train_placeholder)
-
     batch_size = args.batch_size
     input_placeholder = images
 
-    # data_set = ver_list[0]
-    # feed_dict = input_map
     print('testing verification..')
     data_list = data_set[0]
     issame_list = data_set[1]
@@ -248,12 +205,6 @@ def get_insightface_embeddings(args):
             data_tmp -= 127.5
             data_tmp *= 0.0078125
 
-            # time0 = datetime.datetime.now()
-
-            # if phase_train_placeholder is not None:
-            # mr_feed_dict = {input_placeholder: data_tmp, phase_train_placeholder: False}
-            # _embeddings = sess.run(embeddings, mr_feed_dict)
-            # else:
             feed_dict_test[input_placeholder] = data_tmp
             time0 = datetime.datetime.now()
             _embeddings = sess.run(embeddings, feed_dict_test)
@@ -284,18 +235,15 @@ def get_insightface_embeddings(args):
     _xnorm /= _xnorm_cnt
 
     final_embeddings_output = embeddings_list[0] + embeddings_list[1]
-    # final_embeddings_output_copy = embeddings_list_copy[0] + embeddings_list_copy[1]
     final_embeddings_output = sklearn.preprocessing.normalize(final_embeddings_output)
-    # final_embeddings_output_copy = sklearn.preprocessing.normalize(final_embeddings_output_copy)
     print(final_embeddings_output.shape)
-    # print(final_embeddings_output_copy.shape)
 
     return embeddings_list, final_embeddings_output, _xnorm
 
+
 if __name__ == '__main__':
-    # args = get_args()
     args = Args()
-    # get_facenet_embeddings(args)
+    get_facenet_embeddings(args)
     # exit(0)
 
     get_insightface_embeddings(args)
