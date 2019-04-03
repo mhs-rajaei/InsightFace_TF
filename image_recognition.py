@@ -22,6 +22,12 @@ import lfw
 import time
 from scipy import misc
 import matplotlib.pyplot as plt
+from sklearn.externals import joblib
+
+import classifier
+import data_parse
+
+
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 log_path = os.path.join(PROJECT_PATH, 'output')
@@ -82,7 +88,9 @@ class Args:
 
     validation_set_split_ratio = 0.05
     min_nrof_val_images_per_class = 1
-    
+    classifier = "knn"  # svm or knn
+    use_trained_svm = None
+
 def data_iter(datasets, batch_size):
     data_num = datasets.shape[0]
     for i in range(0, data_num, batch_size):
@@ -345,34 +353,37 @@ def get_insightface_embeddings(args, image_list=None, label_list=None):
     return embeddings_array, embeddings_array_flip, final_embeddings_output, _xnorm
 
 
-def test_model(embeddings, dataset=None, image_list=None, label_list=None, name_dict=None, index_dict=None, facenet_insightface='facenet'):
-    if dataset:
-        # Get a list of image paths and their labels
-        _image_list, _label_list, _name_dict, _index_dict = facenet.get_image_paths_and_labels(dataset, path=True)
+def test_model(embeddings_array, embeddings_array_flip, final_embeddings_output, dataset=None, image_list=None, label_list=None,
+               name_dict=None, index_dict=None, facenet_insightface='facenet', nrof_classes=None):
+    # if dataset:
+    # Get a list of image paths and their labels
+    _image_list, _label_list, _name_dict, _index_dict = facenet.get_image_paths_and_labels(dataset, path=True)
 
     # Get embedding of _image_list
-    embeddings_array, embeddings_array_flip, final_embeddings_output, xnorm = get_facenet_embeddings(args, image_list=_image_list)
+    _embeddings_array, _embeddings_array_flip, _final_embeddings_output, xnorm = get_facenet_embeddings(args, image_list=_image_list)
 
     # compute mean distance from random pic of the chosen guy to all the guys in the database
     mean_dist_all = []
     TP_counter = 0
-    for i in range(final_embeddings_output.shape[0]):
+    for i in range(_final_embeddings_output.shape[0]):
         min_dist = sys.maxsize
         mean_dist = []
-        for j in range(embeddings.shape[0]):
-            mean_embedding = np.mean(embeddings[j], axis=0)
+        mean_embedding = np.mean(_final_embeddings_output[i], axis=0)
+
+        for j in range(final_embeddings_output.shape[0]):
 
             # compute dist from guy's pic to mean embedding
-            dist = np.linalg.norm(mean_embedding - final_embeddings_output[i])
+            # dist = np.linalg.norm(mean_embedding - final_embeddings_output[j])
+            dist = np.linalg.norm(mean_embedding - final_embeddings_output[j])
             mean_dist.append(dist)
             if min_dist > dist:
                 min_dist = dist
                 closest_guy = j
         mean_dist_all.append(min_dist)
-        print('%s\t: %.2f' % (closest_guy, dist))
+        # print('%s\t: %.2f' % (closest_guy, dist))
 
-        print('%s\t: %.2f' % (index_dict[str(label_list[closest_guy])], dist))
-        print(f"Actual label: {_index_dict[str(_label_list[i])]}, Predicted label: {index_dict[str(label_list[closest_guy])]}")
+        # print('%s\t: %.2f' % (index_dict[str(label_list[closest_guy])], dist))
+        # print(f"Actual label: {_index_dict[str(_label_list[i])]}, Predicted label: {index_dict[str(label_list[closest_guy])]}")
         if _index_dict[str(_label_list[i])] == index_dict[str(label_list[closest_guy])]:
             TP_counter += 1
         # imgs = [misc.imread(_image_list[i]), misc.imread(image_list[closest_guy])]
@@ -384,6 +395,55 @@ def test_model(embeddings, dataset=None, image_list=None, label_list=None, name_
         # plt.show()
         # plt.close()
     print(f"TP_counter / final_embeddings_output.shape[0]: {TP_counter / final_embeddings_output.shape[0]}")
+
+    # @#$#$%$%^&^&*&*(&*(Q@@!#@#$!@#$#$%@$#^%$&^%&^&*^&*()!@#!@#$#$%$%^%^&%^*^&(&*)*()!@#$@$#$%$%^$%&^&*^(&)*!@#!@#$$#@$#$%$%^%^&%^*^&*(**&^*(
+    # Run Classification
+    if args.use_trained_svm == None:
+        args.use_trained_svm = ""
+
+    start_time_classify = time.time()
+    result = classify(args.classifier, args.use_trained_svm, final_embeddings_output, label_list, _final_embeddings_output, _label_list,
+                      nrof_classes_facenet, index_dict)
+
+    print("Classify Time: %s minutes" % ((time.time() - start_time_classify) / 60))
+
+
+def classify(classify_type, trained_svm, train_data, train_labels, test_data, test_labels, num_classes, label_lookup_dict):
+    """
+    classify - function to use facial embeddings to judge what label a face is associated with
+
+    args    classify_type - type of classification to use ("svm" or "knn")
+            train_data - data to use for training
+            train_labels - labels to use for training
+            test_data - data to use for testing
+            test_labels - labels to check against predicted values
+            num_classes - required for neural classifier
+            label_lookup_dict - dict for easy lookup of int to label
+
+    returns accuracy - accuracy of the produced model
+    """
+
+    if classify_type == "svm":
+        classify_method = classifier.SVM_Classifier(train_data, train_labels, test_data, test_labels)
+    elif classify_type == "neural":
+        classify_method = classifier.Neural_Classifier(train_data, train_labels, test_data, test_labels, num_classes)
+    elif classify_type == "knn":
+        classify_method = classifier.KNNClassifier(train_data, train_labels, test_data, test_labels)
+    else:
+        print("You have provided and invalid classifier type. (Valid options are svm or neural)")
+        return False
+
+    #if we are provided with a pre trained svm, there is no need to carry out training
+    if trained_svm == "":
+        model = classify_method.train()
+    else:
+        print("Using pre trained svm...")
+        model = joblib.load(trained_svm)
+
+    accuracy = classify_method.check_accuracy(model, label_lookup_dict)
+
+    return accuracy
+
 
 
 if __name__ == '__main__':
@@ -422,8 +482,9 @@ if __name__ == '__main__':
 
         # @#@##@##@#@@#@#@#@#@#@@#@@#@##@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@
         # Test the model
-        test_model(final_embeddings_output_facenet, dataset=val_set_facenet, image_list=image_list_facenet, label_list=label_list_facenet,
-                   name_dict=name_dict_facenet, index_dict=index_dict_facenet)
+        test_model(embeddings_array_facenet, embeddings_array_flip_facenet, final_embeddings_output_facenet, dataset=val_set_facenet,
+                   image_list=image_list_facenet, label_list=label_list_facenet,
+                   name_dict=name_dict_facenet, index_dict=index_dict_facenet, nrof_classes=nrof_classes_facenet)
 
 
     else:
