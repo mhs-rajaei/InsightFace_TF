@@ -86,7 +86,7 @@ class Args:
     facenet_pairs = insightface_pair
 
     validation_set_split_ratio = 0.87
-    min_nrof_val_images_per_class = 3
+    min_nrof_val_images_per_class = 2
     classifier = "knn"  # svm or knn
     use_trained_svm = None
 
