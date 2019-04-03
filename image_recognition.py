@@ -23,9 +23,7 @@ import time
 from scipy import misc
 import matplotlib.pyplot as plt
 from sklearn.externals import joblib
-
 import classifier
-import data_parse
 
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -81,15 +79,17 @@ class Args:
     batch_size = 32
 
     facenet_image_size = 160
-    facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_160"
+    facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL VIS_160"
+    # facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS+NIR_160"
     facenet_batch_size = batch_size
     facenet_model = os.path.join(PROJECT_PATH, 'models/facenet/20180402-114759')
     facenet_pairs = insightface_pair
 
-    validation_set_split_ratio = 0.05
+    validation_set_split_ratio = 0.5
     min_nrof_val_images_per_class = 1
     classifier = "knn"  # svm or knn
     use_trained_svm = None
+
 
 def data_iter(datasets, batch_size):
     data_num = datasets.shape[0]
@@ -362,40 +362,6 @@ def test_model(embeddings_array, embeddings_array_flip, final_embeddings_output,
     # Get embedding of _image_list
     _embeddings_array, _embeddings_array_flip, _final_embeddings_output, xnorm = get_facenet_embeddings(args, image_list=_image_list)
 
-    # compute mean distance from random pic of the chosen guy to all the guys in the database
-    mean_dist_all = []
-    TP_counter = 0
-    for i in range(_final_embeddings_output.shape[0]):
-        min_dist = sys.maxsize
-        mean_dist = []
-        mean_embedding = np.mean(_final_embeddings_output[i], axis=0)
-
-        for j in range(final_embeddings_output.shape[0]):
-
-            # compute dist from guy's pic to mean embedding
-            # dist = np.linalg.norm(mean_embedding - final_embeddings_output[j])
-            dist = np.linalg.norm(mean_embedding - final_embeddings_output[j])
-            mean_dist.append(dist)
-            if min_dist > dist:
-                min_dist = dist
-                closest_guy = j
-        mean_dist_all.append(min_dist)
-        # print('%s\t: %.2f' % (closest_guy, dist))
-
-        # print('%s\t: %.2f' % (index_dict[str(label_list[closest_guy])], dist))
-        # print(f"Actual label: {_index_dict[str(_label_list[i])]}, Predicted label: {index_dict[str(label_list[closest_guy])]}")
-        if _index_dict[str(_label_list[i])] == index_dict[str(label_list[closest_guy])]:
-            TP_counter += 1
-        # imgs = [misc.imread(_image_list[i]), misc.imread(image_list[closest_guy])]
-        # f = plt.figure()
-        # f.add_subplot(1, 2, 1)
-        # plt.imshow(imgs[0])
-        # f.add_subplot(1, 2, 2)
-        # plt.imshow(imgs[1])
-        # plt.show()
-        # plt.close()
-    print(f"TP_counter / final_embeddings_output.shape[0]: {TP_counter / final_embeddings_output.shape[0]}")
-
     # @#$#$%$%^&^&*&*(&*(Q@@!#@#$!@#$#$%@$#^%$&^%&^&*^&*()!@#!@#$#$%$%^%^&%^*^&(&*)*()!@#$@$#$%$%^$%&^&*^(&)*!@#!@#$$#@$#$%$%^%^&%^*^&*(**&^*(
     # Run Classification
     if args.use_trained_svm == None:
@@ -445,7 +411,6 @@ def classify(classify_type, trained_svm, train_data, train_labels, test_data, te
     return accuracy
 
 
-
 if __name__ == '__main__':
 
     args = Args()
@@ -464,6 +429,8 @@ if __name__ == '__main__':
                                                                            args.min_nrof_val_images_per_class, 'SPLIT_IMAGES')
         train_set_facenet, val_set_facenet = facenet.split_dataset(facenet_dataset, args.validation_set_split_ratio, args.min_nrof_val_images_per_class,
                                                                    'SPLIT_IMAGES')
+        val_set_facenet = facenet.get_dataset(r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL NIR_160")
+        print(f"len(val_set_facenet): {len(val_set_facenet)}")
         # # InsightFace
         # # Get a list of image paths and their labels
         # image_list_insightface, label_list_insightface, name_dict_insightface, index_dict_insightface = \
@@ -475,7 +442,8 @@ if __name__ == '__main__':
         # FaceNet
         # Get a list of image paths and their labels
         image_list_facenet, label_list_facenet, name_dict_facenet, index_dict_facenet = \
-            facenet.get_image_paths_and_labels(train_set_facenet, path=args.facenet_dataset_dir)
+            facenet.get_image_paths_and_labels(facenet_dataset, path=args.facenet_dataset_dir)
+            # facenet.get_image_paths_and_labels(train_set_facenet, path=args.facenet_dataset_dir)
         # Get embedding of database
         embeddings_array_facenet, embeddings_array_flip_facenet, final_embeddings_output_facenet, xnorm_facenet = \
             get_facenet_embeddings(args, image_list=image_list_facenet)
