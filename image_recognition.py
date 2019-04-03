@@ -79,14 +79,14 @@ class Args:
     batch_size = 32
 
     facenet_image_size = 160
-    facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL VIS_160"
-    # facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS+NIR_160"
+    # facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL NIR_160"
+    facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS+NIR_160"
     facenet_batch_size = batch_size
     facenet_model = os.path.join(PROJECT_PATH, 'models/facenet/20180402-114759')
     facenet_pairs = insightface_pair
 
-    validation_set_split_ratio = 0.5
-    min_nrof_val_images_per_class = 1
+    validation_set_split_ratio = 0.7
+    min_nrof_val_images_per_class = 3
     classifier = "knn"  # svm or knn
     use_trained_svm = None
 
@@ -429,8 +429,8 @@ if __name__ == '__main__':
                                                                            args.min_nrof_val_images_per_class, 'SPLIT_IMAGES')
         train_set_facenet, val_set_facenet = facenet.split_dataset(facenet_dataset, args.validation_set_split_ratio, args.min_nrof_val_images_per_class,
                                                                    'SPLIT_IMAGES')
-        val_set_facenet = facenet.get_dataset(r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL NIR_160")
-        print(f"len(val_set_facenet): {len(val_set_facenet)}")
+        # _val_set_facenet = facenet.get_dataset(r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL VIS_160")
+        # print(f"len(val_set_facenet): {len(val_set_facenet)}")
         # # InsightFace
         # # Get a list of image paths and their labels
         # image_list_insightface, label_list_insightface, name_dict_insightface, index_dict_insightface = \
@@ -442,8 +442,7 @@ if __name__ == '__main__':
         # FaceNet
         # Get a list of image paths and their labels
         image_list_facenet, label_list_facenet, name_dict_facenet, index_dict_facenet = \
-            facenet.get_image_paths_and_labels(facenet_dataset, path=args.facenet_dataset_dir)
-            # facenet.get_image_paths_and_labels(train_set_facenet, path=args.facenet_dataset_dir)
+            facenet.get_image_paths_and_labels(train_set_facenet, path=args.facenet_dataset_dir)
         # Get embedding of database
         embeddings_array_facenet, embeddings_array_flip_facenet, final_embeddings_output_facenet, xnorm_facenet = \
             get_facenet_embeddings(args, image_list=image_list_facenet)
