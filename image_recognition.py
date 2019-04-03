@@ -85,8 +85,8 @@ class Args:
     facenet_model = os.path.join(PROJECT_PATH, 'models/facenet/20180402-114759')
     facenet_pairs = insightface_pair
 
-    validation_set_split_ratio = 0.9
-    min_nrof_val_images_per_class = 3
+    validation_set_split_ratio = 0.90
+    min_nrof_val_images_per_class = 1
     classifier = "knn"  # svm or knn
     use_trained_svm = None
 
