@@ -49,18 +49,20 @@ class Args:
     ckpt_file = r'F:\Documents\JetBrains\PyCharm\OFR\InsightFace_TF\output\ckpt\model_d\InsightFace_iter_best_'
     ckpt_index_list = ['710000.ckpt']
 
-    # eval_dataset = eval_dir_path
-    eval_pair = os.path.join(PROJECT_PATH, 'data/First_100_ALL VIS_112_1.txt')
-    eval_dataset = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_112"
+    # insightface_dataset_dir = eval_dir_path
+    insightface_pair = os.path.join(PROJECT_PATH, 'data/First_100_ALL VIS_112_1.txt')
+    insightface_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_112"
 
-    image_size = 112
+    insightface_image_size = 112
     batch_size = 32
 
     facenet_image_size = 160
-    facenet_dataset = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_160"
+    facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_160"
     facenet_batch_size = batch_size
     facenet_model = os.path.join(PROJECT_PATH, 'models/facenet/20180402-114759')
-    facenet_pairs = eval_pair
+    facenet_pairs = insightface_pair
+
+    validation_set_split_ratio = 0.0
 
 
 if __name__ == '__main__':
@@ -70,18 +72,18 @@ if __name__ == '__main__':
     # Read the file containing the pairs used for testing
     ver_list = []
     ver_name_list = []
-    print('begin db %s convert.' % args.eval_dataset)
+    print('begin db %s convert.' % args.insightface_dataset_dir)
 
     data_set = eval_data_reader.load_eval_datasets_2(args, facenet=False)
     ver_list.append(data_set)
-    ver_name_list.append(args.eval_dataset)
+    ver_name_list.append(args.insightface_dataset_dir)
 
     #  -------------------------------------------------------------------------------------------------------------------
     print(f"{'='}"*40)
 
     #  Evaluate custom dataset with InsightFace_TF pre-trained model
     print("Evaluate custom dataset with InsightFace_TF pre-trained model")
-    images = tf.placeholder(name='img_inputs', shape=[None, args.image_size, args.image_size, 3], dtype=tf.float32)
+    images = tf.placeholder(name='img_inputs', shape=[None, args.insightface_image_size, args.insightface_image_size, 3], dtype=tf.float32)
     labels = tf.placeholder(name='img_labels', shape=[None, ], dtype=tf.int64)
     dropout_rate = tf.placeholder(name='dropout_rate', dtype=tf.float32)
 
@@ -117,11 +119,11 @@ if __name__ == '__main__':
     # Read the file containing the pairs used for testing
     ver_list = []
     ver_name_list = []
-    print('begin db %s convert.' % args.eval_dataset)
+    print('begin db %s convert.' % args.facenet_dataset_dir)
 
     data_set = eval_data_reader.load_eval_datasets_2(args, facenet=True)
     ver_list.append(data_set)
-    ver_name_list.append(args.eval_dataset)
+    ver_name_list.append(args.facenet_dataset_dir)
     
     #  Evaluate custom dataset with facenet pre-trained model
     print("Evaluate custom dataset with facenet pre-trained model")

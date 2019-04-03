@@ -101,12 +101,12 @@ def get_paths_3(args, facenet=False):
         # Read the file containing the pairs used for testing
         pairs = read_pairs_2(os.path.expanduser(args.facenet_pairs))
         # Get the paths for the corresponding images
-        path_list, issame_list = get_paths_2(os.path.expanduser(args.facenet_dataset), pairs)
+        path_list, issame_list = get_paths_2(os.path.expanduser(args.facenet_dataset_dir), pairs)
     else:
         # Read the file containing the pairs used for testing
         pairs = read_pairs_2(os.path.expanduser(args.insightface_pair))
         # Get the paths for the corresponding images
-        path_list, issame_list = get_paths_2(os.path.expanduser(args.insightface_dataset), pairs)
+        path_list, issame_list = get_paths_2(os.path.expanduser(args.insightface_dataset_dir), pairs)
 
     return path_list, issame_list
 
@@ -308,7 +308,7 @@ if __name__ == '__main__':
     args = get_parser()
     ver_list = []
     ver_name_list = []
-    for db in args.insightface_dataset:
+    for db in args.insightface_dataset_dir:
         print('begin db %s convert.' % db)
         # mx2tfrecords_eval_data(args, db)
         data_set = load_bin(db, args.image_size)

@@ -695,7 +695,7 @@ def custom_insightface_evaluation(args):
     print('Area Under Curve LFW (AUC): %1.3f' % auc_lfw)
 
     sess.close()
-
+    
     return acc2, std2, _xnorm, [embeddings_array, embeddings_array_flip]
 
     # return embeddings_array, embeddings_array_flip, final_embeddings_output, _xnorm

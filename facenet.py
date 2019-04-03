@@ -42,6 +42,7 @@ import math
 from six import iteritems
 import pathlib
 import time
+from packaging import version
 
 
 def timeit(ds, BATCH_SIZE, repeat_count=1):
@@ -543,7 +544,7 @@ class ImageClass():
 def load_and_preprocess_image(image_path, label=None, image_size=192, seed=313, normalize=True, do_resize=False, do_random_crop=False,
                               flip_left_right=False, do_random_flip_left_right=False, do_random_flip_up_down=False, do_prewhiten=True,
                               to_GRAY=False, to_RGB=False, random_rotate=False, fixed_standardization=False, random_hue=False,
-                              random_saturation=False, random_brightness=False, random_contrast=False):
+                              random_saturation=False, random_brightness=False, random_contrast=False, to_float32=False):
 
     image_string = tf.read_file(image_path)
     # img = tf.image.decode_image(image_string)
@@ -551,7 +552,9 @@ def load_and_preprocess_image(image_path, label=None, image_size=192, seed=313, 
     img = tf.cond(tf.image.is_jpeg(image_string),
         lambda: tf.image.decode_jpeg(image_string, channels=3),
         lambda: tf.image.decode_png(image_string, channels=3))
-
+    if to_float32:
+        img = tf.cast(img, dtype=tf.float32)
+        
     if to_GRAY:
         img = tf.image.rgb_to_grayscale(img)
 
@@ -625,9 +628,12 @@ def preprocess_image(image, dim=96):
     return image
 
 
-def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, image_size=96, method='cache_slices', BATCH_SIZE=32,
+def tf_gen_dataset(image_list, label_list=None, nrof_preprocess_threads=4, image_size=96, method='cache_slices', BATCH_SIZE=32,
                    seed=313, performance=False, repeat_count=1, path=None, in_memory = True, normalize=True, do_resize=False,
-                   do_random_crop=False, do_random_flip=False, do_random_flip_up_down=False, do_prewhiten=False, shuffle=True):
+                   do_random_crop=False, flip_left_right=False, do_random_flip_left_right=False, do_random_flip_up_down=False,
+                   do_prewhiten=False, to_GRAY=False, to_RGB=False, random_rotate=False, fixed_standardization=False, random_hue=False,
+                   random_saturation=False, random_brightness=False, random_contrast=False, to_float32=False, shuffle=True):
+
     """
 
     :param image_list:
@@ -704,20 +710,43 @@ def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, 
     if method == 'slices':
         # Note: When you have arrays like all_image_labels and all_image_paths an alternative to tf.data.dataset.Dataset.zip is to
         # slice the pair of arrays.
-        ds = tf.data.Dataset.from_tensor_slices((image_list, label_list))
-        image_label_ds = \
-            ds.map(
-                lambda image_path, label: load_and_preprocess_image(
-                image_path, label=label, image_size=image_size, seed=seed, normalize=normalize, do_resize=do_resize,
-                do_random_crop=do_random_crop, do_random_flip_left_right=do_random_flip, do_random_flip_up_down=do_random_flip_up_down,
-                do_prewhiten=do_prewhiten),
-            num_parallel_calls=nrof_preprocess_threads)
+
+        if label_list:
+            ds = tf.data.Dataset.from_tensor_slices((image_list, label_list))
+            image_label_ds = \
+                ds.map(
+                    lambda image_path, label: load_and_preprocess_image(
+                        image_path, label=label, image_size=image_size, seed=seed, normalize=normalize, do_resize=do_resize,
+                        do_random_crop=do_random_crop, flip_left_right=flip_left_right, do_random_flip_left_right=do_random_flip_left_right,
+                        do_random_flip_up_down=do_random_flip_up_down, do_prewhiten=do_prewhiten, to_GRAY=to_GRAY, to_RGB=to_RGB,
+                        random_rotate=random_rotate, fixed_standardization=fixed_standardization,
+                        random_hue=random_hue, random_saturation=random_saturation, random_brightness=random_brightness,
+                        random_contrast=random_contrast, to_float32=to_float32
+                    ),
+                    num_parallel_calls=nrof_preprocess_threads)
+        else:
+            ds = tf.data.Dataset.from_tensor_slices(image_list)
+            image_label_ds = \
+                ds.map(
+                    lambda image_path: load_and_preprocess_image(
+                        image_path=image_path, image_size=image_size, seed=seed, normalize=normalize, do_resize=do_resize,
+                        do_random_crop=do_random_crop, flip_left_right=flip_left_right, do_random_flip_left_right=do_random_flip_left_right,
+                        do_random_flip_up_down=do_random_flip_up_down, do_prewhiten=do_prewhiten, to_GRAY=to_GRAY, to_RGB=to_RGB,
+                        random_rotate=random_rotate, fixed_standardization=fixed_standardization,
+                        random_hue=random_hue, random_saturation=random_saturation, random_brightness=random_brightness,
+                        random_contrast=random_contrast, to_float32=to_float32
+                    ),
+                    num_parallel_calls=nrof_preprocess_threads)
 
         # Setting a shuffle buffer size as large as the dataset ensures that the data is
         # completely shuffled.
         # ds = image_label_ds.shuffle(buffer_size=image_count)
         if shuffle:
-            ds = image_label_ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
+            if version.parse(tf.__version__) >= version.parse("1.12.0"):
+                ds = image_label_ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
+            else:
+                ds = image_label_ds.shuffle(buffer_size=image_count, seed=seed, reshuffle_each_iteration=True).repeat(repeat_count)
+
         ds = ds.batch(BATCH_SIZE).prefetch(buffer_size=nrof_preprocess_threads)
         # ds = ds.batch(BATCH_SIZE)
         # # `prefetch` lets the dataset fetch batches, in the background while the model is training.
@@ -736,20 +765,56 @@ def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, 
         # The easiest way to build a tf.data.Dataset is using the from_tensor_slices method.
         # Note: When you have arrays like all_image_labels and all_image_paths an alternative to tf.data.dataset.Dataset.zip is to
         # slice the pair of arrays.
-        ds = tf.data.Dataset.from_tensor_slices((image_list, label_list))
+        # ds = tf.data.Dataset.from_tensor_slices((image_list, label_list))
+        if label_list:
+            ds = tf.data.Dataset.from_tensor_slices((image_list, label_list))
+            image_label_ds = \
+                ds.map(
+                    lambda image_path, label: load_and_preprocess_image(
+                        image_path, label=label, image_size=image_size, seed=seed, normalize=normalize, do_resize=do_resize,
+                        do_random_crop=do_random_crop, flip_left_right=flip_left_right, do_random_flip_left_right=do_random_flip_left_right,
+                        do_random_flip_up_down=do_random_flip_up_down, do_prewhiten=do_prewhiten, to_GRAY=to_GRAY, to_RGB=to_RGB,
+                        random_rotate=random_rotate, fixed_standardization=fixed_standardization,
+                        random_hue=random_hue, random_saturation=random_saturation, random_brightness=random_brightness,
+                        random_contrast=random_contrast, to_float32=to_float32
+                    ),
+                    num_parallel_calls=nrof_preprocess_threads)
+        else:
+            ds = tf.data.Dataset.from_tensor_slices(image_list)
+            image_label_ds = \
+                ds.map(
+                    lambda image_path: load_and_preprocess_image(
+                        image_path=image_path, image_size=image_size, seed=seed, normalize=normalize, do_resize=do_resize,
+                        do_random_crop=do_random_crop, flip_left_right=flip_left_right, do_random_flip_left_right=do_random_flip_left_right,
+                        do_random_flip_up_down=do_random_flip_up_down, do_prewhiten=do_prewhiten, to_GRAY=to_GRAY, to_RGB=to_RGB,
+                        random_rotate=random_rotate, fixed_standardization=fixed_standardization,
+                        random_hue=random_hue, random_saturation=random_saturation, random_brightness=random_brightness,
+                        random_contrast=random_contrast, to_float32=to_float32
+                    ),
+                    num_parallel_calls=nrof_preprocess_threads)
+
         # Now create a new dataset that loads and formats images on the fly by mapping preprocess_image over the dataset of paths.
-        image_label_ds = \
-            ds.map(
-                lambda image_path, label: load_and_preprocess_image(
-                    image_path, label=label, image_size=image_size,seed=seed, normalize=normalize, do_resize=do_resize, do_random_crop=do_random_crop,
-                    do_random_flip_left_right=do_random_flip, do_random_flip_up_down=do_random_flip_up_down, do_prewhiten=do_prewhiten),
-            num_parallel_calls=nrof_preprocess_threads)
+        # image_label_ds = \
+        #     ds.map(
+        #         lambda image_path, label: load_and_preprocess_image(
+        #             image_path, label=label, image_size=image_size, seed=seed, normalize=normalize, do_resize=do_resize,
+        #             do_random_crop=do_random_crop, flip_left_right=flip_left_right, do_random_flip_left_right=do_random_flip_left_right,
+        #             do_random_flip_up_down=do_random_flip_up_down, do_prewhiten=do_prewhiten, to_GRAY=to_GRAY, to_RGB=to_RGB,
+        #             random_rotate=random_rotate, fixed_standardization=fixed_standardization,
+        #             random_hue=random_hue, random_saturation=random_saturation, random_brightness=random_brightness,
+        #             random_contrast=random_contrast
+        #             ),
+        #     num_parallel_calls=nrof_preprocess_threads)
 
         if in_memory:
             print('::::::::::::::::::::::::::::::::in memory cache::::::::::::::::::::::::::::::::')
             ds = image_label_ds.cache()
             if shuffle:
-                ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
+                if version.parse(tf.__version__) >= version.parse("1.12.0"):
+                    ds = image_label_ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
+                else:
+                    ds = image_label_ds.shuffle(buffer_size=image_count, seed=seed, reshuffle_each_iteration=True).repeat(repeat_count)
+
             ds = ds.batch(BATCH_SIZE).prefetch(buffer_size=nrof_preprocess_threads)
             if performance:
                 timeit(ds, BATCH_SIZE, repeat_count)
@@ -762,7 +827,10 @@ def tf_gen_dataset(image_list=None, label_list=None, nrof_preprocess_threads=4, 
             # If the data doesn't fit in memory, use a cache file:
             ds = image_label_ds.cache(filename='./cache.tf-data')
             if shuffle:
-                ds = ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
+                if version.parse(tf.__version__) >= version.parse("1.12.0"):
+                    ds = image_label_ds.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=image_count, count=repeat_count, seed=seed))
+                else:
+                    ds = image_label_ds.shuffle(buffer_size=image_count, seed=seed, reshuffle_each_iteration=True).repeat(repeat_count)
 
             ds = ds.batch(BATCH_SIZE).prefetch(nrof_preprocess_threads)
             if performance:
