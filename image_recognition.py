@@ -43,57 +43,6 @@ face_losses = SourceFileLoader('face_losses', os.path.join(PROJECT_PATH, 'losses
 # verification = SourceFileLoader('verification', os.path.join(PROJECT_PATH, 'verification.py')).load_module()
 
 
-class Args:
-    net_depth = 50
-    epoch = 1000
-    lr_steps = [40000, 60000, 80000]
-    momentum = 0.9
-    weight_decay = 5e-4
-
-    num_output = 85164
-
-    # train_dataset_dir = train_dataset_path
-    train_dataset_dir = None
-    summary_path = join(log_path, 'summary')
-    ckpt_path = join(log_path, 'ckpt')
-    log_file_path = join(log_path, 'logs')
-
-    saver_maxkeep = 10
-    buffer_size = 10000
-    log_device_mapping = False
-    summary_interval = 100
-    ckpt_interval = 100
-    validate_interval = 100
-    show_info_interval = 100
-    seed = 313
-    nrof_preprocess_threads = 4
-
-    ckpt_file = r'F:\Documents\JetBrains\PyCharm\OFR\InsightFace_TF\output\ckpt\model_d\InsightFace_iter_best_'
-    ckpt_index_list = ['710000.ckpt']
-
-    # insightface_dataset_dir = eval_dir_path
-    insightface_pair = os.path.join(PROJECT_PATH, 'data/First_100_ALL VIS_112_1.txt')
-    insightface_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_112"
-    insightface_val_dataset_dir = None
-
-    insightface_image_size = 112
-    batch_size = 32
-
-    facenet_image_size = 160
-    facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL NIR_160"
-    facenet_val_dataset_dir = None
-    # facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS+NIR_160"
-    facenet_batch_size = batch_size
-    facenet_model = os.path.join(PROJECT_PATH, 'models/facenet/20180402-114759')
-    facenet_pairs = insightface_pair
-
-    validation_set_split_ratio = 0.75
-    min_nrof_val_images_per_class = 1
-    classifier = "knn"  # svm or knn
-    use_trained_svm = None
-
-    log_device_placement = False
-
 def data_iter(datasets, batch_size):
     data_num = datasets.shape[0]
     for i in range(0, data_num, batch_size):
@@ -121,8 +70,8 @@ class FaceNet:
         self.image_list = image_list
 
     def get_embeddings(self):
-        #  Evaluate custom dataset with facenet pre-trained model
-        print("Getting embeddings with facenet pre-trained model")
+        #  Evaluate custom dataset with FaceNet pre-trained model
+        print("Getting embeddings with FaceNet pre-trained model")
         # with tf.Graph().as_default():
         if self.graph is None:
             self.graph = tf.Graph()
@@ -322,10 +271,6 @@ class InsightFace:
             if self.saver is None:
                 self.saver = tf.train.Saver()
 
-            # if self.feed_dict is None:
-            #     self.feed_dict = {}
-            # if self.feed_dict_flip is None:
-            #     self.feed_dict_flip = {}
             self.feed_dict = {}
             self.feed_dict_flip = {}
 
@@ -341,7 +286,6 @@ class InsightFace:
             self.feed_dict_flip[self.dropout_rate] = 1.0
 
             batch_size = self.args.batch_size
-            # input_placeholder = images
 
             self.sess.run(tf_dataset_iterator.initializer)
             print('getting embeddings..')
@@ -508,19 +452,61 @@ def classify(classify_type, trained_svm, train_data, train_labels, test_data, te
     return accuracy
 
 
+class Args:
+    net_depth = 50
+    epoch = 1000
+    lr_steps = [40000, 60000, 80000]
+    momentum = 0.9
+    weight_decay = 5e-4
+
+    num_output = 85164
+
+    # train_dataset_dir = train_dataset_path
+    train_dataset_dir = None
+    summary_path = join(log_path, 'summary')
+    ckpt_path = join(log_path, 'ckpt')
+    log_file_path = join(log_path, 'logs')
+
+    saver_maxkeep = 10
+    buffer_size = 10000
+    log_device_mapping = False
+    summary_interval = 100
+    ckpt_interval = 100
+    validate_interval = 100
+    show_info_interval = 100
+    seed = 313
+    nrof_preprocess_threads = 4
+
+    ckpt_file = r'F:\Documents\JetBrains\PyCharm\OFR\InsightFace_TF\output\ckpt\model_d\InsightFace_iter_best_'
+    ckpt_index_list = ['710000.ckpt']
+
+    # insightface_dataset_dir = eval_dir_path
+    insightface_pair = os.path.join(PROJECT_PATH, 'data/First_100_ALL VIS_112_1.txt')
+    insightface_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_112"
+    insightface_val_dataset_dir = None
+
+    insightface_image_size = 112
+    batch_size = 32
+
+    facenet_image_size = 160
+    facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL NIR_160"
+    facenet_val_dataset_dir = None
+    # facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS+NIR_160"
+    facenet_batch_size = batch_size
+    facenet_model = os.path.join(PROJECT_PATH, 'models/facenet/20180402-114759')
+    facenet_pairs = insightface_pair
+
+    validation_set_split_ratio = 0.75
+    min_nrof_val_images_per_class = 1
+    classifier = "knn"  # svm or knn
+    use_trained_svm = None
+
+    log_device_placement = False
+
+
 if __name__ == '__main__':
 
     args = Args()
-
-    # if args.validation_set_split_ratio > 0.0:
     test_model(args, facenet_or_insightface='facenet')
     test_model(args, facenet_or_insightface='insightfface')
-
-    # else:
-    #     get_facenet_embeddings(args)
-    #     print(f"{'*@*'}" * 50)
-    #     print(f"{'*@*'}" * 50)
-    #     print(f"{'*@*'}" * 50)
-    #     get_insightface_embeddings(args)
-
 
