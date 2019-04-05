@@ -115,7 +115,7 @@ class FaceNet:
         self.label_list = label_list
         self.pre_trained_model_loaded = False
 
-    def get_facenet_embeddings(self):
+    def get_embeddings(self):
         #  Evaluate custom dataset with facenet pre-trained model
         print("Getting embeddings with facenet pre-trained model")
         # with tf.Graph().as_default():
@@ -398,6 +398,44 @@ def test_model(embeddings_array, embeddings_array_flip, final_embeddings_output,
     print("Classify Time: %s minutes" % ((time.time() - start_time_classify) / 60))
 
 
+def test_model_2(dataset_dir, validation_set_split_ratio, min_nrof_val_images_per_class, facenet_or_insightface='facenet'):
+    # Read the directory containing images
+    dataset = facenet.get_dataset(dataset_dir)
+    nrof_classes = len(dataset)
+
+    # Split dataset to train and validation set's
+    train_set, val_set = facenet.split_dataset(dataset, validation_set_split_ratio, min_nrof_val_images_per_class, 'SPLIT_IMAGES')
+
+    # Get a list of image paths and their labels
+    image_list, label_list, name_dict, index_dict = facenet.get_image_paths_and_labels(train_set, path=True)
+
+    if facenet_or_insightface == 'facenet':
+        class_obj = FaceNet(args)
+
+    class_obj.image_list = image_list
+
+    # Get embedding of _image_list
+    embeddings_array, embeddings_array_flip, final_embeddings_output, xnorm = class_obj.get_embeddings()
+
+    # @#@##@##@#@@#@#@#@#@#@@#@@#@##@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@
+    # Test the model
+    # Get a list of image paths and their labels
+    test_image_list, test_label_list, test_name_dict, test_index_dict = facenet.get_image_paths_and_labels(val_set, path=True)
+    class_obj.image_list = test_image_list
+    # Get embedding of _image_list
+    test_embeddings_array, test_embeddings_array_flip, test_final_embeddings_output, test_xnorm = class_obj.get_embeddings()
+
+    # Run Classification
+    if args.use_trained_svm == None:
+        args.use_trained_svm = ""
+
+    start_time_classify = time.time()
+    result = classify(args.classifier, args.use_trained_svm, final_embeddings_output, label_list, test_final_embeddings_output, test_label_list,
+                      nrof_classes, index_dict)
+
+    print("Classify Time: %s minutes" % ((time.time() - start_time_classify) / 60))
+
+
 def classify(classify_type, trained_svm, train_data, train_labels, test_data, test_labels, num_classes, label_lookup_dict):
     """
     classify - function to use facial embeddings to judge what label a face is associated with
@@ -440,6 +478,11 @@ if __name__ == '__main__':
     args = Args()
 
     if args.validation_set_split_ratio > 0.0:
+
+        test_model_2(args.facenet_dataset_dir, args.validation_set_split_ratio, args.min_nrof_val_images_per_class,
+                     facenet_or_insightface='facenet')
+        exit(0)
+
         # Read the directory containing images
         insightface_dataset = facenet.get_dataset(args.insightface_dataset_dir)
         nrof_classes_insightface = len(insightface_dataset)
