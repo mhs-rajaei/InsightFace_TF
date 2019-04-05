@@ -74,12 +74,14 @@ class Args:
     # insightface_dataset_dir = eval_dir_path
     insightface_pair = os.path.join(PROJECT_PATH, 'data/First_100_ALL VIS_112_1.txt')
     insightface_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_100_ALL VIS_112"
+    insightface_val_dataset_dir = None
 
     insightface_image_size = 112
     batch_size = 32
 
     facenet_image_size = 160
     facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL NIR_160"
+    facenet_val_dataset_dir = None
     # facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS+NIR_160"
     facenet_batch_size = batch_size
     facenet_model = os.path.join(PROJECT_PATH, 'models/facenet/20180402-114759')
@@ -90,6 +92,7 @@ class Args:
     classifier = "knn"  # svm or knn
     use_trained_svm = None
 
+    log_device_placement = False
 
 def data_iter(datasets, batch_size):
     data_num = datasets.shape[0]
@@ -99,7 +102,8 @@ def data_iter(datasets, batch_size):
 
 class FaceNet:
     def __init__(self, args, graph=None, embeddings_array=None, embeddings_array_flip=None, final_embeddings_output=None, xnorm=None, sess=None,
-                 image_batch=None, label_batch=None, phase_train_placeholder=None, input_map=None, embeddings=None, label_list=None):
+                 image_batch=None, label_batch=None, phase_train_placeholder=None, input_map=None, embeddings=None,
+                 image_list=None, label_list=None):
         self.args = args
         self.graph = graph
         self.embeddings_array = embeddings_array
@@ -114,6 +118,7 @@ class FaceNet:
         self.embeddings = embeddings
         self.label_list = label_list
         self.pre_trained_model_loaded = False
+        self.image_list = image_list
 
     def get_embeddings(self):
         #  Evaluate custom dataset with facenet pre-trained model
@@ -143,7 +148,7 @@ class FaceNet:
             tf_dataset_next_element = tf_dataset_iterator.get_next()
 
             if self.sess is None:
-                self.sess = tf.Session()
+                self.sess = tf.Session(config=tf.ConfigProto(log_device_placement=self.args.log_device_placement))
 
             self.sess.run(tf_dataset_iterator.initializer)
 
@@ -243,174 +248,204 @@ class FaceNet:
         return embeddings_array, embeddings_array_flip, final_embeddings_output, xnorm
 
 
-def get_insightface_embeddings(args, image_list=None, label_list=None):
-    tf.reset_default_graph()
-    if image_list is None:
-        # Read the directory containing images
-        dataset = facenet.get_dataset(args.insightface_dataset_dir)
-        nrof_classes = len(dataset)
+class InsightFace:
+    def __init__(self, args, graph=None, embeddings_array=None, embeddings_array_flip=None, final_embeddings_output=None, xnorm=None, sess=None,
+                 image_batch=None, label_batch=None, embeddings=None, image_list=None, label_list=None, dropout_rate=None,
+                 w_init_method=None, net=None, saver=None, feed_dict=None,
+                 feed_dict_flip=None):
+        self.args = args
+        self.graph = graph
+        self.embeddings_array = embeddings_array
+        self.embeddings_array_flip = embeddings_array_flip
+        self.final_embeddings_output = final_embeddings_output
+        self.xnorm = xnorm
+        self.sess = sess
+        self.image_batch = image_batch
+        self.label_batch = label_batch
+        self.embeddings = embeddings
+        self.pre_trained_model_loaded = False
+        self.image_list = image_list
+        self.label_list = label_list
+        self.dropout_rate = dropout_rate
+        self.w_init_method = w_init_method
+        self.net = net
+        self.embeddings = embeddings
+        self.saver = saver
+        self.feed_dict = feed_dict
+        self.feed_dict_flip = feed_dict_flip
 
-    #  Evaluate custom dataset with facenet pre-trained model
-    print("Getting embeddings with facenet pre-trained model")
+    def get_embeddings(self):
+        #  Evaluate custom dataset with InsightFace pre-trained model
+        print("Getting embeddings with InsightFace pre-trained model")
 
-    if image_list is None:
-        # Get a list of image paths and their labels
-        image_list, label_list = facenet.get_image_paths_and_labels(dataset)
-        print('Number of classes in  dataset: %d' % nrof_classes)
+        if self.graph is None:
+            self.graph = tf.Graph()
 
-    assert len(image_list) > 0, 'The  dataset should not be empty'
-    print('Number of examples in dataset: %d' % len(image_list))
+        with self.graph.as_default():
+            if self.image_list is None:
+                # Read the directory containing images
+                dataset = facenet.get_dataset(self.args.facenet_dataset_dir)
+                nrof_classes = len(dataset)
+                # Get a list of image paths and their labels
+                self.image_list, self.label_list = facenet.get_image_paths_and_labels(dataset)
+                print('Number of classes in  dataset: %d' % nrof_classes)
 
-    # Getting batched images by TF dataset
-    tf_dataset = facenet.tf_gen_dataset(image_list=image_list, label_list=None, nrof_preprocess_threads=args.nrof_preprocess_threads,
-                                        image_size=args.insightface_dataset_dir, method='cache_slices',
-                                        BATCH_SIZE=args.batch_size, repeat_count=1, to_float32=True, shuffle=False)
-    tf_dataset_iterator = tf_dataset.make_initializable_iterator()
-    tf_dataset_next_element = tf_dataset_iterator.get_next()
+            assert len(self.image_list) > 0, 'The  dataset should not be empty'
+            print('Number of examples in dataset: %d' % len(self.image_list))
 
-    images = tf.placeholder(name='img_inputs', shape=[None, args.insightface_image_size, args.insightface_image_size, 3], dtype=tf.float32)
-    labels = tf.placeholder(name='img_labels', shape=[None, ], dtype=tf.int64)
-    dropout_rate = tf.placeholder(name='dropout_rate', dtype=tf.float32)
+            # Getting batched images by TF dataset
+            tf_dataset = facenet.tf_gen_dataset(image_list=self.image_list, label_list=None, nrof_preprocess_threads=self.args.nrof_preprocess_threads,
+                                                image_size=self.args.insightface_dataset_dir, method='cache_slices',
+                                                BATCH_SIZE=self.args.batch_size, repeat_count=1, to_float32=True, shuffle=False)
+            tf_dataset_iterator = tf_dataset.make_initializable_iterator()
+            tf_dataset_next_element = tf_dataset_iterator.get_next()
 
-    w_init_method = tf.contrib.layers.xavier_initializer(uniform=False)
-    net = L_Resnet_E_IR_fix_issue9.get_resnet(images, args.net_depth, type='ir', w_init=w_init_method, trainable=False,
-                                              keep_rate=dropout_rate)
-    embeddings = net.outputs
-    # mv_mean = tl.layers.get_variables_with_name('resnet_v1_50/bn0/moving_mean', False, True)[0]
-    # 3.2 get arcface loss
-    # logit = arcface_loss(embedding=net.outputs, labels=labels, w_init=w_init_method, out_num=args.num_output)
+            if self.image_batch is None:
+                self.image_batch = tf.placeholder(name='img_inputs', shape=[None, self.args.insightface_image_size, self.args.insightface_image_size, 3],
+                                    dtype=tf.float32)
+            if self.label_batch is None:
+                self.label_batch = tf.placeholder(name='img_labels', shape=[None, ], dtype=tf.int64)
+            if self.dropout_rate is None:
+                self.dropout_rate = tf.placeholder(name='dropout_rate', dtype=tf.float32)
+            if self.w_init_method is None:
+                self.w_init_method = tf.contrib.layers.xavier_initializer(uniform=False)
+            if self.net is None:
+                self.net = L_Resnet_E_IR_fix_issue9.get_resnet(self.image_batch, self.args.net_depth, type='ir', w_init=self.w_init_method,
+                                                               trainable=False, keep_rate=self.dropout_rate)
+            if self.embeddings is None:
+                self.embeddings = self.net.outputs
+            # mv_mean = tl.layers.get_variables_with_name('resnet_v1_50/bn0/moving_mean', False, True)[0]
+            # 3.2 get arcface loss
+            # logit = arcface_loss(embedding=net.outputs, labels=labels, w_init=w_init_method, out_num=self.args.num_output)
+            if self.sess is None:
+                self.sess = tf.Session(config=tf.ConfigProto(log_device_placement=self.args.log_device_placement))
+            if self.saver is None:
+                self.saver = tf.train.Saver()
 
-    sess = tf.Session()
-    saver = tf.train.Saver()
+            # if self.feed_dict is None:
+            #     self.feed_dict = {}
+            # if self.feed_dict_flip is None:
+            #     self.feed_dict_flip = {}
+            self.feed_dict = {}
+            self.feed_dict_flip = {}
 
-    feed_dict = {}
-    feed_dict_flip = {}
-    path = args.ckpt_file + args.ckpt_index_list[0]
-    saver.restore(sess, path)
-    print('ckpt file %s restored!' % args.ckpt_index_list[0])
-    feed_dict.update(tl.utils.dict_to_one(net.all_drop))
-    feed_dict_flip.update(tl.utils.dict_to_one(net.all_drop))
-    feed_dict[dropout_rate] = 1.0
-    feed_dict_flip[dropout_rate] = 1.0
+            if not self.pre_trained_model_loaded:
+                path = self.args.ckpt_file + self.args.ckpt_index_list[0]
+                self.saver.restore(self.sess, path)
+                self.pre_trained_model_loaded = True
+                print('ckpt file %s restored!' % self.args.ckpt_index_list[0])
 
-    batch_size = args.batch_size
-    input_placeholder = images
+            self.feed_dict.update(tl.utils.dict_to_one(self.net.all_drop))
+            self.feed_dict_flip.update(tl.utils.dict_to_one(self.net.all_drop))
+            self.feed_dict[self.dropout_rate] = 1.0
+            self.feed_dict_flip[self.dropout_rate] = 1.0
 
-    sess.run(tf_dataset_iterator.initializer)
-    print('getting embeddings..')
+            batch_size = self.args.batch_size
+            # input_placeholder = images
 
-    total_time = 0
-    batch_number = 0
-    embeddings_array = None
-    embeddings_array_flip = None
-    while True:
-        try:
-            images = sess.run(tf_dataset_next_element)
+            self.sess.run(tf_dataset_iterator.initializer)
+            print('getting embeddings..')
 
-            data_tmp = images.copy()  # fix issues #4
+            total_time = 0
+            batch_number = 0
+            embeddings_array = None
+            embeddings_array_flip = None
+            while True:
+                try:
+                    images = self.sess.run(tf_dataset_next_element)
 
-            for i in range(data_tmp.shape[0]):
-                data_tmp[i, ...] -= 127.5
-                data_tmp[i, ...] *= 0.0078125
-                data_tmp[i, ...] = cv2.cvtColor(data_tmp[i, ...], cv2.COLOR_RGB2BGR)
+                    data_tmp = images.copy()  # fix issues #4
 
-            # Getting flip to left_right batched images by TF dataset
-            data_tmp_flip = images.copy()  # fix issues #4
-            for i in range(data_tmp_flip.shape[0]):
-                data_tmp_flip[i, ...] = np.fliplr(data_tmp_flip[i, ...])
-                data_tmp_flip[i, ...] -= 127.5
-                data_tmp_flip[i, ...] *= 0.0078125
-                data_tmp_flip[i, ...] = cv2.cvtColor(data_tmp_flip[i, ...], cv2.COLOR_RGB2BGR)
+                    for i in range(data_tmp.shape[0]):
+                        data_tmp[i, ...] -= 127.5
+                        data_tmp[i, ...] *= 0.0078125
+                        data_tmp[i, ...] = cv2.cvtColor(data_tmp[i, ...], cv2.COLOR_RGB2BGR)
 
-            start_time = time.time()
+                    # Getting flip to left_right batched images by TF dataset
+                    data_tmp_flip = images.copy()  # fix issues #4
+                    for i in range(data_tmp_flip.shape[0]):
+                        data_tmp_flip[i, ...] = np.fliplr(data_tmp_flip[i, ...])
+                        data_tmp_flip[i, ...] -= 127.5
+                        data_tmp_flip[i, ...] *= 0.0078125
+                        data_tmp_flip[i, ...] = cv2.cvtColor(data_tmp_flip[i, ...], cv2.COLOR_RGB2BGR)
 
-            feed_dict[input_placeholder] = data_tmp
-            _embeddings = sess.run(embeddings, feed_dict)
+                    start_time = time.time()
 
-            feed_dict_flip[input_placeholder] = data_tmp_flip
-            _embeddings_flip = sess.run(embeddings, feed_dict_flip)
+                    self.feed_dict[self.image_batch] = data_tmp
+                    _embeddings = self.sess.run(self.embeddings, self.feed_dict)
 
-            if embeddings_array is None:
-                embeddings_array = np.zeros((len(image_list), _embeddings.shape[1]))
-                embeddings_array_flip = np.zeros((len(image_list), _embeddings_flip.shape[1]))
-            try:
-                embeddings_array[batch_number * batch_size:min((batch_number + 1) * batch_size, len(image_list)), ...] = _embeddings
-                embeddings_array_flip[batch_number * batch_size:min((batch_number + 1) * batch_size, len(image_list)),
-                ...] = _embeddings_flip
-                # print('try: ', batch_number * batch_size, min((batch_number + 1) * batch_size, len(image_list)), ...)
-            except ValueError:
-                print('batch_number*batch_size value is %d min((batch_number+1)*batch_size, len(image_list)) %d,'
-                      ' batch_size %d, data.shape[0] %d' %
-                      (batch_number * batch_size, min((batch_number + 1) * batch_size, len(image_list)), batch_size,
-                       images.shape[0]))
-                print('except: ', batch_number * batch_size, min((batch_number + 1) * batch_size, images.shape[0]), ...)
+                    self.feed_dict_flip[self.image_batch] = data_tmp_flip
+                    _embeddings_flip = self.sess.run(self.embeddings, self.feed_dict_flip)
 
-            duration = time.time() - start_time
-            batch_number += 1
-            total_time += duration
-        except tf.errors.OutOfRangeError:
-            print('tf.errors.OutOfRangeError, Reinitialize tf_dataset_iterator')
-            sess.run(tf_dataset_iterator.initializer)
-            break
+                    if embeddings_array is None:
+                        embeddings_array = np.zeros((len(self.image_list), _embeddings.shape[1]))
+                        embeddings_array_flip = np.zeros((len(self.image_list), _embeddings_flip.shape[1]))
+                    try:
+                        embeddings_array[batch_number * batch_size:min((batch_number + 1) * batch_size, len(self.image_list)), ...] = _embeddings
+                        embeddings_array_flip[batch_number * batch_size:min((batch_number + 1) * batch_size, len(self.image_list)),
+                        ...] = _embeddings_flip
+                        # print('try: ', batch_number * batch_size, min((batch_number + 1) * batch_size, len(image_list)), ...)
+                    except ValueError:
+                        print('batch_number*batch_size value is %d min((batch_number+1)*batch_size, len(image_list)) %d,'
+                              ' batch_size %d, data.shape[0] %d' %
+                              (batch_number * batch_size, min((batch_number + 1) * batch_size, len(self.image_list)), batch_size,
+                               images.shape[0]))
+                        print('except: ', batch_number * batch_size, min((batch_number + 1) * batch_size, images.shape[0]), ...)
 
-    print(f"total_time: {total_time}")
+                    duration = time.time() - start_time
+                    batch_number += 1
+                    total_time += duration
+                except tf.errors.OutOfRangeError:
+                    print('tf.errors.OutOfRangeError, Reinitialize tf_dataset_iterator')
+                    self.sess.run(tf_dataset_iterator.initializer)
+                    break
 
-    _xnorm = 0.0
-    _xnorm_cnt = 0
-    for embed in [embeddings_array, embeddings_array_flip]:
-        for i in range(embed.shape[0]):
-            _em = embed[i]
-            _norm = np.linalg.norm(_em)
-            # print(_em.shape, _norm)
-            _xnorm += _norm
-            _xnorm_cnt += 1
-    _xnorm /= _xnorm_cnt
+            print(f"total_time: {total_time}")
 
-    final_embeddings_output = embeddings_array + embeddings_array_flip
-    final_embeddings_output = sklearn.preprocessing.normalize(final_embeddings_output)
-    print(final_embeddings_output.shape)
+        xnorm = 0.0
+        xnorm_cnt = 0
+        for embed in [embeddings_array, embeddings_array_flip]:
+            for i in range(embed.shape[0]):
+                _em = embed[i]
+                _norm = np.linalg.norm(_em)
+                # print(_em.shape, _norm)
+                xnorm += _norm
+                xnorm_cnt += 1
+        xnorm /= xnorm_cnt
 
-    sess.close()
+        final_embeddings_output = embeddings_array + embeddings_array_flip
+        final_embeddings_output = sklearn.preprocessing.normalize(final_embeddings_output)
+        print(final_embeddings_output.shape)
 
-    return embeddings_array, embeddings_array_flip, final_embeddings_output, _xnorm
-
-
-def test_model(embeddings_array, embeddings_array_flip, final_embeddings_output, dataset=None, image_list=None, label_list=None,
-               name_dict=None, index_dict=None, facenet_insightface='facenet', nrof_classes=None):
-    # # if dataset:
-    # # Get a list of image paths and their labels
-    # _image_list, _label_list, _name_dict, _index_dict = facenet.get_image_paths_and_labels(dataset, path=True)
-    #
-    # facenet_obj = FaceNet(args)
-    # facenet_obj.image_list = _image_list
-    # # Get embedding of _image_list
-    # # _embeddings_array, _embeddings_array_flip, _final_embeddings_output, xnorm = get_facenet_embeddings(args, image_list=_image_list)
-    # _embeddings_array, _embeddings_array_flip, _final_embeddings_output, _xnorm = facenet_obj.get_facenet_embeddings()
-    # @#$#$%$%^&^&*&*(&*(Q@@!#@#$!@#$#$%@$#^%$&^%&^&*^&*()!@#!@#$#$%$%^%^&%^*^&(&*)*()!@#$@$#$%$%^$%&^&*^(&)*!@#!@#$$#@$#$%$%^%^&%^*^&*(**&^*(
-    # Run Classification
-    if args.use_trained_svm == None:
-        args.use_trained_svm = ""
-
-    start_time_classify = time.time()
-    result = classify(args.classifier, args.use_trained_svm, final_embeddings_output, label_list, _final_embeddings_output, _label_list,
-                      nrof_classes_facenet, index_dict)
-
-    print("Classify Time: %s minutes" % ((time.time() - start_time_classify) / 60))
+        return embeddings_array, embeddings_array_flip, final_embeddings_output, xnorm
 
 
-def test_model_2(dataset_dir, validation_set_split_ratio, min_nrof_val_images_per_class, facenet_or_insightface='facenet'):
+def test_model(args, facenet_or_insightface='facenet'):
+
+    if facenet_or_insightface == 'facenet':
+        class_obj = FaceNet(args)
+        dataset_dir = args.facenet_dataset_dir
+        val_dataset_dir = args.facenet_val_dataset_dir
+    else:
+        class_obj = InsightFace(args)
+        dataset_dir = args.insightface_dataset_dir
+        val_dataset_dir = args.insightface_val_dataset_dir
+
     # Read the directory containing images
     dataset = facenet.get_dataset(dataset_dir)
     nrof_classes = len(dataset)
 
-    # Split dataset to train and validation set's
-    train_set, val_set = facenet.split_dataset(dataset, validation_set_split_ratio, min_nrof_val_images_per_class, 'SPLIT_IMAGES')
+    if args.validation_set_split_ratio > 0.0:
+        # Split dataset to train and validation set's
+        train_set, val_set = facenet.split_dataset(dataset, args.validation_set_split_ratio, args.min_nrof_val_images_per_class, 'SPLIT_IMAGES')
+    else:
+        train_set = dataset
+        val_set = facenet.get_dataset(val_dataset_dir)
+        nrof_val_classes = len(val_set)
+
 
     # Get a list of image paths and their labels
     image_list, label_list, name_dict, index_dict = facenet.get_image_paths_and_labels(train_set, path=True)
-
-    if facenet_or_insightface == 'facenet':
-        class_obj = FaceNet(args)
 
     class_obj.image_list = image_list
 
@@ -477,68 +512,15 @@ if __name__ == '__main__':
 
     args = Args()
 
-    if args.validation_set_split_ratio > 0.0:
+    # if args.validation_set_split_ratio > 0.0:
+    test_model(args, facenet_or_insightface='facenet')
+    test_model(args, facenet_or_insightface='insightfface')
 
-        test_model_2(args.facenet_dataset_dir, args.validation_set_split_ratio, args.min_nrof_val_images_per_class,
-                     facenet_or_insightface='facenet')
-        exit(0)
-
-        # Read the directory containing images
-        insightface_dataset = facenet.get_dataset(args.insightface_dataset_dir)
-        nrof_classes_insightface = len(insightface_dataset)
-
-        # Read the directory containing images
-        facenet_dataset = facenet.get_dataset(args.facenet_dataset_dir)
-        nrof_classes_facenet = len(facenet_dataset)
-
-        # Split dataset to train and validation set's
-        train_set_insightface, val_set_insightface = facenet.split_dataset(insightface_dataset, args.validation_set_split_ratio,
-                                                                           args.min_nrof_val_images_per_class, 'SPLIT_IMAGES')
-        train_set_facenet, val_set_facenet = facenet.split_dataset(facenet_dataset, args.validation_set_split_ratio, args.min_nrof_val_images_per_class,
-                                                                   'SPLIT_IMAGES')
-        # # InsightFace
-        # # Get a list of image paths and their labels
-        # image_list_insightface, label_list_insightface, name_dict_insightface, index_dict_insightface = \
-        #     facenet.get_image_paths_and_labels(train_set_insightface, path=args.insightface_dataset_dir)
-        # # Get embedding of database
-        # embeddings_array_insightface, embeddings_array_flip_insightface, final_embeddings_output_insightface, xnorm_insightface = \
-        #     get_insightface_embeddings(args, image_list=image_list_insightface)
-
-        # FaceNet
-        # Get a list of image paths and their labels
-        image_list_facenet, label_list_facenet, name_dict_facenet, index_dict_facenet = \
-            facenet.get_image_paths_and_labels(train_set_facenet, path=args.facenet_dataset_dir)
-
-        facenet_obj = FaceNet(args)
-        facenet_obj.image_list = image_list_facenet
-        # Get embedding of _image_list
-        # _embeddings_array, _embeddings_array_flip, _final_embeddings_output, xnorm = get_facenet_embeddings(args, image_list=_image_list)
-        embeddings_array_facenet, embeddings_array_flip_facenet, final_embeddings_output_facenet, xnorm_facenet = facenet_obj.get_facenet_embeddings()
-
-        # Get embedding of database
-        # embeddings_array_facenet, embeddings_array_flip_facenet, final_embeddings_output_facenet, xnorm_facenet = \
-        #     facenet_obj.get_facenet_embeddings()
-
-        # @#@##@##@#@@#@#@#@#@#@@#@@#@##@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@
-        # Test the model
-
-        # Get a list of image paths and their labels
-        _image_list, _label_list, _name_dict, _index_dict = facenet.get_image_paths_and_labels(val_set_facenet, path=True)
-        facenet_obj.image_list = _image_list
-        # Get embedding of _image_list
-        # _embeddings_array, _embeddings_array_flip, _final_embeddings_output, xnorm = get_facenet_embeddings(args, image_list=_image_list)
-        _embeddings_array, _embeddings_array_flip, _final_embeddings_output, _xnorm = facenet_obj.get_facenet_embeddings()
-
-        test_model(embeddings_array_facenet, embeddings_array_flip_facenet, final_embeddings_output_facenet, dataset=val_set_facenet,
-                   image_list=image_list_facenet, label_list=label_list_facenet,
-                   name_dict=name_dict_facenet, index_dict=index_dict_facenet, nrof_classes=nrof_classes_facenet)
-
-
-    else:
-        get_facenet_embeddings(args)
-        print(f"{'*@*'}" * 50)
-        print(f"{'*@*'}" * 50)
-        print(f"{'*@*'}" * 50)
-        get_insightface_embeddings(args)
+    # else:
+    #     get_facenet_embeddings(args)
+    #     print(f"{'*@*'}" * 50)
+    #     print(f"{'*@*'}" * 50)
+    #     print(f"{'*@*'}" * 50)
+    #     get_insightface_embeddings(args)
 
 
