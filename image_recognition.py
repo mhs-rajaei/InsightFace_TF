@@ -387,7 +387,6 @@ def test_model(args, facenet_or_insightface='facenet'):
         val_set = facenet.get_dataset(val_dataset_dir)
         nrof_val_classes = len(val_set)
 
-
     # Get a list of image paths and their labels
     image_list, label_list, name_dict, index_dict = facenet.get_image_paths_and_labels(train_set, path=True)
 
@@ -407,6 +406,82 @@ def test_model(args, facenet_or_insightface='facenet'):
     # Run Classification
     if args.use_trained_svm == None:
         args.use_trained_svm = ""
+
+    # What is the best threshold for the verification problem (Distance Threshold)
+    from sklearn.metrics import f1_score, accuracy_score
+    distances = []  # squared L2 distance between pairs
+    identical = []  # 1 if same identity, 0 otherwise
+
+    for i in range(len(label_list)):
+        for j in range(len(test_label_list)):
+            distances.append(distance(final_embeddings_output[i], test_final_embeddings_output[j]))
+            identical.append(1 if label_list[i] == test_label_list[j] else 0)
+
+    distances = np.array(distances)
+    identical = np.array(identical)
+
+    thresholds = np.arange(0.3, 1.0, 0.01)
+
+    f1_scores = [f1_score(identical, distances < t) for t in thresholds]
+    acc_scores = [accuracy_score(identical, distances < t) for t in thresholds]
+
+    opt_idx = np.argmax(f1_scores)
+    # Threshold at maximal F1 score
+    opt_tau = thresholds[opt_idx]
+    # Accuracy at maximal F1 score
+    opt_acc = accuracy_score(identical, distances < opt_tau)
+
+    # Plot F1 score and accuracy as function of distance threshold
+    plt.plot(thresholds, f1_scores, label='F1 score')
+    plt.plot(thresholds, acc_scores, label='Accuracy')
+    plt.axvline(x=opt_tau, linestyle='--', lw=1, c='lightgrey', label='Threshold')
+    plt.title(f'Accuracy at threshold {opt_tau:.2f} = {opt_acc:.3f}')
+    plt.xlabel('Distance threshold')
+    plt.legend()
+    plt.show()
+    # -------------------------------------------------------------------------------------------------------------------------
+
+
+    # Distance distributions of positive and negative pairs
+    dist_pos = distances[identical == 1]
+    dist_neg = distances[identical == 0]
+
+    plt.figure(figsize=(12, 4))
+
+    plt.subplot(121)
+    plt.hist(dist_pos)
+    plt.axvline(x=opt_tau, linestyle='--', lw=1, c='lightgrey', label='Threshold')
+    plt.title('Distances (pos. pairs)')
+    plt.legend()
+
+    plt.subplot(122)
+    plt.hist(dist_neg)
+    plt.axvline(x=opt_tau, linestyle='--', lw=1, c='lightgrey', label='Threshold')
+    plt.title('Distances (neg. pairs)')
+    plt.legend()
+    plt.show()
+
+    # -------------------------------------------------------------------------------------------------------------------------
+
+    # Face recognition - with KNN or an SVM
+    from sklearn.preprocessing import LabelEncoder
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.svm import LinearSVC
+
+    knn = KNeighborsClassifier(n_neighbors=1, metric='euclidean')
+    svc = LinearSVC()
+
+    knn.fit(final_embeddings_output, label_list)
+    svc.fit(final_embeddings_output, label_list)
+
+    y_pred_knn = knn.predict(test_final_embeddings_output)
+    acc_knn = accuracy_score(test_label_list, y_pred_knn)
+    y_pred_svc = knn.predict(test_final_embeddings_output)
+    acc_svc = accuracy_score(test_label_list, y_pred_svc)
+
+    print(f'KNN accuracy = {acc_knn}, SVM accuracy = {acc_svc}')
+
+    # -------------------------------------------------------------------------------------------------------------------------
 
     start_time_classify = time.time()
     result = classify(args.classifier, args.use_trained_svm, final_embeddings_output, label_list, test_final_embeddings_output, test_label_list,
@@ -452,6 +527,10 @@ def classify(classify_type, trained_svm, train_data, train_labels, test_data, te
     return accuracy
 
 
+def distance(emb1, emb2):
+    return np.sum(np.square(emb1 - emb2))
+
+
 class Args:
     net_depth = 50
     epoch = 1000
@@ -489,14 +568,14 @@ class Args:
     batch_size = 32
 
     facenet_image_size = 160
-    facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL NIR_160"
-    facenet_val_dataset_dir = None
+    facenet_dataset_dir = r'E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL VIS_160'
+    facenet_val_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\First_70_ALL NIR_160"
     # facenet_dataset_dir = r"E:\Projects & Courses\CpAE\NIR-VIS-2.0 Dataset -cbsr.ia.ac.cn\All VIS+NIR_160"
     facenet_batch_size = batch_size
     facenet_model = os.path.join(PROJECT_PATH, 'models/facenet/20180402-114759')
     facenet_pairs = insightface_pair
 
-    validation_set_split_ratio = 0.75
+    validation_set_split_ratio = 0.0
     min_nrof_val_images_per_class = 1
     classifier = "knn"  # svm or knn
     use_trained_svm = None
@@ -508,5 +587,5 @@ if __name__ == '__main__':
 
     args = Args()
     test_model(args, facenet_or_insightface='facenet')
-    test_model(args, facenet_or_insightface='insightfface')
+    # test_model(args, facenet_or_insightface='insightfface')
 
