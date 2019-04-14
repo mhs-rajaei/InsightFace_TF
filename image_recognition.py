@@ -24,6 +24,7 @@ from scipy import misc
 import matplotlib.pyplot as plt
 from sklearn.externals import joblib
 import classifier
+import random
 
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -480,6 +481,87 @@ def test_model(args, facenet_or_insightface='facenet'):
     acc_svc = accuracy_score(test_label_list, y_pred_svc)
 
     print(f'KNN accuracy = {acc_knn}, SVM accuracy = {acc_svc}')
+
+    # -------------------------------------------------------------------------------------------------------------------------
+
+    # OpenCV loads images with color channels
+    # in BGR order. So we need to reverse them
+    def load_image(path):
+        img = cv2.imread(path, 1)
+        return img[..., ::-1]
+
+    import warnings
+    # Suppress LabelEncoder warning
+    warnings.filterwarnings('ignore')
+
+    def show_prediction(example_idx):
+        plt.figure()
+        example_image = load_image(test_image_list[example_idx])
+        example_prediction = knn.predict([test_final_embeddings_output[example_idx]])
+        encoder = LabelEncoder()
+        encoder.fit(test_label_list)
+        example_identity = encoder.inverse_transform(example_prediction)[0]
+
+        plt.imshow(example_image)
+        plt.title(f'Recognized as {example_identity}, Correct label is {test_label_list[idx]}')
+        plt.show()
+
+    def show_predictions(indexes, correct_label=None, predict_label=None):
+        plt.figure(figsize=(16, 16))
+
+        for i, idx in enumerate(indexes[:16]):
+            example_image = load_image(test_image_list[idx])
+            example_prediction = knn.predict([test_final_embeddings_output[idx]])
+            encoder = LabelEncoder()
+            encoder.fit(test_label_list)
+            example_identity = encoder.inverse_transform(example_prediction)[0]
+
+            plt.subplot(4, 4, i + 1)
+            plt.imshow(example_image)
+            plt.title(f'Recognized as {example_identity+1}, Correct label is {test_label_list[idx]+1}')
+        plt.show()
+
+    idxs = range(0, len(test_image_list))
+    random_idxs = random.sample(idxs, 16)
+    show_predictions(random_idxs)
+    # -------------------------------------------------------------------------------------------------------------------------
+    # Missclassified images
+    error_pairs = []
+    for i, item in enumerate(y_pred_knn):
+        if item != test_label_list[i]:
+            error_pairs.append(i)
+
+    print(error_pairs)
+
+    show_predictions(error_pairs)
+
+    # -------------------------------------------------------------------------------------------------------------------------
+
+    # # Dataset visualization
+    # from sklearn.manifold import TSNE
+    # # Train dataset
+    # X_embedded = TSNE(n_components=2).fit_transform(final_embeddings_output)
+    #
+    # plt.figure(figsize=(10, 10))
+    #
+    # for i, t in enumerate(set(label_list)):
+    #     idx = label_list == t
+    #     plt.scatter(X_embedded[idx, 0], X_embedded[idx, 1], label=t)
+    #
+    # plt.legend(bbox_to_anchor=(1, 1))
+    # plt.show()
+    #
+    # # Test dataset
+    # X_embedded = TSNE(n_components=2).fit_transform(test_final_embeddings_output)
+    #
+    # plt.figure(figsize=(10, 10))
+    #
+    # for i, t in enumerate(set(test_label_list)):
+    #     idx = test_label_list == t
+    #     plt.scatter(X_embedded[idx, 0], X_embedded[idx, 1], label=t)
+    #
+    # plt.legend(bbox_to_anchor=(1, 1))
+    # plt.show()
 
     # -------------------------------------------------------------------------------------------------------------------------
 
