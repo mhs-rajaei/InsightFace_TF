@@ -25,6 +25,11 @@ import matplotlib.pyplot as plt
 from sklearn.externals import joblib
 import classifier
 import random
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import NearestNeighbors
+from sklearn.preprocessing import LabelEncoder
+from sklearn.svm import LinearSVC
+from face_recognition_knn import *
 
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -465,11 +470,7 @@ def test_model(args, facenet_or_insightface='facenet'):
     # -------------------------------------------------------------------------------------------------------------------------
 
     # Face recognition - with KNN or an SVM
-    from sklearn.preprocessing import LabelEncoder
-    from sklearn.neighbors import KNeighborsClassifier
-    from sklearn.svm import LinearSVC
-
-    knn = KNeighborsClassifier(n_neighbors=1, metric='euclidean')
+    knn = KNeighborsClassifier(n_neighbors=3, metric='euclidean')
     svc = LinearSVC()
 
     knn.fit(final_embeddings_output, label_list)
@@ -483,6 +484,46 @@ def test_model(args, facenet_or_insightface='facenet'):
     print(f'KNN accuracy = {acc_knn}, SVM accuracy = {acc_svc}')
 
     # -------------------------------------------------------------------------------------------------------------------------
+    K = 1
+    knn_2 = NearestNeighbors(n_neighbors=K)
+    knn_2.fit(final_embeddings_output, label_list)
+    dist, ind = knn_2.kneighbors()
+    density_knn = 1 / (np.sum(dist, axis=1) / K)
+
+    pca = PCA()
+    pca.fit(final_embeddings_output, label_list)
+    pcas = np.inner(final_embeddings_output, pca.components_)
+
+    knn_treshold = opt_tau
+    plt.scatter(pcas[:, 0], pcas[:, 1], c=np.where(density_knn < knn_treshold, 0, 1))
+    plt.show()
+
+    def visualize_density(density, filename=None, count=None):
+        if count is None:
+            count = 5
+        indices = np.argsort(density)[:count]
+        x = np.arange(len(indices))
+        plt.ylabel('Density')
+        plt.yscale('log')
+        plt.xlabel('Outlier number')
+        plt.bar(x, density[indices], bottom=np.min(density) / 100)
+        if filename:
+            plt.savefig(filename)
+        plt.show()
+
+    visualize_density(density_knn, filename=None, count=len(test_label_list))
+
+    # -------------------------------------------------------------------------------------------------------------------------
+
+    classifier = train(X=final_embeddings_output, y=label_list, n_neighbors=1)
+    predictions = predict(test_final_embeddings_output, knn_clf=classifier, distance_threshold=0.8)
+    acc_3 = 0
+    for i in range(len(predictions)):
+        if predictions[i][0] == test_label_list[i]:
+            acc_3 += 1
+    acc_3 /= len(predictions)
+    print()
+    # -------------------------------------------------------------------------------------------------------------------------
 
     # OpenCV loads images with color channels
     # in BGR order. So we need to reverse them
@@ -494,7 +535,7 @@ def test_model(args, facenet_or_insightface='facenet'):
     # Suppress LabelEncoder warning
     warnings.filterwarnings('ignore')
 
-    def show_prediction(example_idx):
+    def show_prediction(example_idx, label):
         plt.figure()
         example_image = load_image(test_image_list[example_idx])
         example_prediction = knn.predict([test_final_embeddings_output[example_idx]])
@@ -503,10 +544,10 @@ def test_model(args, facenet_or_insightface='facenet'):
         example_identity = encoder.inverse_transform(example_prediction)[0]
 
         plt.imshow(example_image)
-        plt.title(f'Recognized as {example_identity}, Correct label is {test_label_list[idx]}')
+        plt.title(f'Recognized as {example_identity}, Correct label is {label}')
         plt.show()
 
-    def show_predictions(indexes, correct_label=None, predict_label=None):
+    def show_predictions(indexes):
         plt.figure(figsize=(16, 16))
 
         for i, idx in enumerate(indexes[:16]):
@@ -533,35 +574,11 @@ def test_model(args, facenet_or_insightface='facenet'):
 
     print(error_pairs)
 
-    show_predictions(error_pairs)
-
+    random_error_pairs_idxs = random.sample(error_pairs, 16)
+    show_predictions(random_error_pairs_idxs)
     # -------------------------------------------------------------------------------------------------------------------------
 
-    # # Dataset visualization
-    # from sklearn.manifold import TSNE
-    # # Train dataset
-    # X_embedded = TSNE(n_components=2).fit_transform(final_embeddings_output)
-    #
-    # plt.figure(figsize=(10, 10))
-    #
-    # for i, t in enumerate(set(label_list)):
-    #     idx = label_list == t
-    #     plt.scatter(X_embedded[idx, 0], X_embedded[idx, 1], label=t)
-    #
-    # plt.legend(bbox_to_anchor=(1, 1))
-    # plt.show()
-    #
-    # # Test dataset
-    # X_embedded = TSNE(n_components=2).fit_transform(test_final_embeddings_output)
-    #
-    # plt.figure(figsize=(10, 10))
-    #
-    # for i, t in enumerate(set(test_label_list)):
-    #     idx = test_label_list == t
-    #     plt.scatter(X_embedded[idx, 0], X_embedded[idx, 1], label=t)
-    #
-    # plt.legend(bbox_to_anchor=(1, 1))
-    # plt.show()
+    # Dataset visualization
 
     # -------------------------------------------------------------------------------------------------------------------------
 
