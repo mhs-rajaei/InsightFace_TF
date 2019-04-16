@@ -5,12 +5,12 @@ import os
 from os.path import join
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 # %matplotlib inline
 import datetime
-import os
-from os.path import join as pjoin
-import sys
+from sklearn.metrics import roc_curve
+#import classification_report
+from sklearn.metrics import classification_report
+import pandas as pd
 import copy
 from sklearn.model_selection import KFold
 from sklearn.decomposition import PCA
@@ -18,7 +18,7 @@ import sklearn
 import facenet
 import data.eval_data_reader as eval_data_reader
 import verification
-import lfw
+from sklearn.metrics import confusion_matrix
 import time
 from scipy import misc
 import matplotlib.pyplot as plt
@@ -30,6 +30,10 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import LinearSVC
 from face_recognition_knn import *
+from sklearn.neighbors import NearestCentroid
+from sklearn.metrics import roc_auc_score
+# import measures
+from sklearn.tree import DecisionTreeClassifier
 
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -580,6 +584,64 @@ def test_model(args, facenet_or_insightface='facenet'):
 
     # Dataset visualization
 
+    # -------------------------------------------------------------------------------------------------------------------------
+    # Setup arrays to store training and test accuracies
+    neighbors = np.arange(1, 20)
+    train_accuracy = np.empty(len(neighbors))
+    test_accuracy = np.empty(len(neighbors))
+
+    for i, k in enumerate(neighbors):
+        # Setup a knn classifier with k neighbors
+        knn_3 = KNeighborsClassifier(n_neighbors=k)
+
+        # Fit the model
+        knn_3.fit(final_embeddings_output, label_list)
+
+        # Compute accuracy on the training set
+        train_accuracy[i] = knn_3.score(final_embeddings_output, label_list)
+
+        # Compute accuracy on the test set
+        test_accuracy[i] = knn_3.score(test_final_embeddings_output, test_label_list)
+
+    # Generate plot
+    plt.title('k-NN Varying number of neighbors')
+    plt.plot(neighbors, test_accuracy, label='Testing Accuracy')
+    plt.plot(neighbors, train_accuracy, label='Training accuracy')
+    plt.legend()
+    plt.xlabel('Number of neighbors')
+    plt.ylabel('Accuracy')
+    plt.show()
+
+    knn_4 = KNeighborsClassifier(n_neighbors=1)
+    knn_4.fit(final_embeddings_output, label_list)
+    y_predict_2 = knn_4.predict(test_final_embeddings_output)
+    confusion_matrix(test_label_list, y_predict_2)
+    print(classification_report(test_label_list, y_predict_2))
+
+    # # ROC (Reciever Operating Charecteristic) curve
+    # y_pred_proba = knn.predict_proba(test_final_embeddings_output)[:, 1]
+    # fpr, tpr, thresholds = roc_curve(test_label_list, y_pred_proba)
+    #
+    # plt.plot([0, 1], [0, 1], 'k--')
+    # plt.plot(fpr, tpr, label='Knn')
+    # plt.xlabel('fpr')
+    # plt.ylabel('tpr')
+    # plt.title('Knn(n_neighbors=7) ROC curve')
+    # plt.show()
+    #
+    # # Area under ROC curve
+    # roc_auc_score(test_label_list, y_pred_proba)
+    # -------------------------------------------------------------------------------------------------------------------------
+    clf = DecisionTreeClassifier(random_state=2)
+    clf.fit(final_embeddings_output, label_list)
+    # y_pred = clf.predict(X_test)  # default threshold is 0.5
+    y_pred = (clf.predict_proba(test_final_embeddings_output)[:, 1] >= 0.3).astype(bool)  # set threshold as 0.3
+    acc_4 = 0
+    for i in range(len(y_pred)):
+        if y_pred[i] == test_label_list[i]:
+            acc_4 += 1
+    acc_4 /= len(predictions)
+    print(acc_4)
     # -------------------------------------------------------------------------------------------------------------------------
 
     start_time_classify = time.time()
