@@ -34,6 +34,9 @@ from sklearn.neighbors import NearestCentroid
 from sklearn.metrics import roc_auc_score
 # import measures
 from sklearn.tree import DecisionTreeClassifier
+from sklearn import metrics
+import align.detect_face as detect_face
+import image_processing
 
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -51,6 +54,86 @@ L_Resnet_E_IR_fix_issue9 = SourceFileLoader('L_Resnet_E_IR_fix_issue9', os.path.
 face_losses = SourceFileLoader('face_losses', os.path.join(PROJECT_PATH, 'losses/face_losses.py')).load_module()
 # eval_data_reader = SourceFileLoader('eval_data_reader', os.path.join(PROJECT_PATH, 'data/eval_data_reader.py')).load_module()
 # verification = SourceFileLoader('verification', os.path.join(PROJECT_PATH, 'verification.py')).load_module()
+
+
+def plot_roc_curve(fpr_list, tpr_list,roc_auc_list,line_names):
+    """
+    Draw a roc curve
+    :param fpr_list:
+    :param tpr_list:
+    :param roc_auc_list:
+    :param line_names: curve name
+    :return:
+    """
+    #
+    plt.figure()
+    lw = 2
+    plt.figure(figsize=(10, 10))
+    colors=["b","r","c","m","g","y","k","w"]
+    for fpr, tpr ,roc_auc, color,line_name in zip(fpr_list, tpr_list,roc_auc_list,colors,line_names):
+        plt.plot(fpr, tpr, color=color,lw=lw, label='{} ROC curve (area = {:.3f})'.format(line_name,roc_auc))  # false positive rate
+        # abscissa, the real Rate the ordinate
+    # plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.plot([0, 1], [1, 0], color='navy', lw=lw, linestyle='--')  # draw a line with y=1-x
+
+    plt.xlim([0.0, 1.0])
+
+    plt.ylim([0.0, 1.05])
+    # Set the horizontal and vertical coordinates corresponding to the name of the font and format
+    font = {'family': 'Times New Roman',
+             'weight': 'normal',
+             'size': 20,
+             }
+    plt.xlabel('False Positive Rate',font)
+    plt.ylabel('True Positive Rate',font)
+
+    plt.title('ROC curve')
+    plt.legend(loc="lower right")#"upper right"
+    # plt.legend(loc="upper right")#"upper right"
+
+    plt.show()
+
+
+def get_roc_curve(y_true, y_score, invert=False,plot_roc=True):
+    """
+    In general, when the threshold is greater than the threshold, y_test is 1. When the threshold is less than or equal to the threshold, y_test is 0.
+     y_test corresponds to y_score one-to-one and is proportional.
+    When the distance is used as the score of y_score, y_test and y_score are inversely proportional at this time (when greater than the threshold,
+    y_test is 0, and y_test is 1 when the threshold is less than or equal to the threshold)
+    :param y_true : true value
+    :param y_score : predictive score
+    :param invert : Whether to invert y_test, when y_test is proportional to y_score, invert=False, when y_test and y_score are inversely related,
+    invert=True
+    :param plot_roc: Whether to draw a roc curve
+    :return:fpr,
+            tpr,
+            roc_auc,
+            Threshold
+            Optimal_idx: the best truncation point, best_threshold = threshold[optimal_idx] to get the best threshold
+    """
+    # Compute ROC curve and ROC area for each class
+    if invert:
+        y_true = 1 - y_true  # 当y_test与y_score是反比关系时,进行反转
+
+    # 计算roc
+    fpr, tpr, threshold = metrics.roc_curve(y_true, y_score, pos_label=1)
+
+    # Calculate the value of auc
+    roc_auc = metrics.auc(fpr, tpr)
+
+    # Compute the optimal threshold: the best cut-off point should be high tpr, and low fpr place.
+    # url :https://stackoverflow.com/questions/28719067/roc-curve-and-cut-off-point-python
+    optimal_idx = np.argmax(tpr - fpr)
+    # best_threshold = threshold[optimal_idx]
+
+    # ROC curve
+    if plot_roc:
+        fpr_list = [fpr]
+        tpr_list = [tpr]
+        roc_auc_list = [roc_auc]
+        line_names = [""]
+        plot_roc_curve(fpr_list, tpr_list, roc_auc_list, line_names=line_names)
+    return fpr, tpr, roc_auc,threshold, optimal_idx
 
 
 def data_iter(datasets, batch_size):
@@ -374,6 +457,89 @@ class InsightFace:
         return embeddings_array, embeddings_array_flip, final_embeddings_output, xnorm
 
 
+class FaceDetection:
+    def __init__(self):
+        self.minsize = 30  # minimum size of face
+        self.threshold = [0.6, 0.7, 0.7]  # three steps's threshold
+        self.factor = 0.709  # scale factor
+        print('Creating networks and loading parameters')
+        with tf.Graph().as_default():
+            # gpu_memory_fraction = 1.0
+            # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_memory_fraction)
+            # sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=False))
+            sess = tf.Session()
+            with sess.as_default():
+                self.pnet, self.rnet, self.onet = detect_face.create_mtcnn(sess, None)
+    def detect_face(self,image,fixed=None):
+        """
+        Mtcnn face detection,
+        PS: Face detection to get bboxes is not necessarily a square rectangle, the parameter fixed specifies bboxes of equal width or height.
+        :param image:
+        :param fixed:
+        :return:
+        """
+        bboxes, landmarks = detect_face.detect_face(image, self.minsize, self.pnet, self.rnet, self.onet, self.threshold, self.factor)
+        landmarks_list = []
+        landmarks=np.transpose(landmarks)
+        bboxes=bboxes.astype(int)
+        bboxes = [b[:4] for b in bboxes]
+        for landmark in landmarks:
+            face_landmarks = [[landmark[j], landmark[j + 5]] for j in range(5)]
+            landmarks_list.append(face_landmarks)
+        if fixed is not None:
+            bboxes,landmarks_list=self.get_square_bboxes(bboxes, landmarks_list, fixed)
+        return bboxes,landmarks_list
+
+    def get_square_bboxes(self, bboxes, landmarks, fixed="height"):
+        """
+        Get bboxes of equal width or contour
+        :param bboxes:
+        :param landmarks:
+        :param fixed: width or height
+        :return:
+        """
+        new_bboxes = []
+        for bbox in bboxes:
+            x1, y1, x2, y2 = bbox
+            w = x2 - x1
+            h = y2 - y1
+            center_x, center_y = (int((x1 + x2) / 2), int((y1 + y2) / 2))
+            if fixed == "height":
+                dd = h / 2
+            elif fixed == 'width':
+                dd = w / 2
+            x11 = int(center_x - dd)
+            y11 = int(center_y - dd)
+            x22 = int(center_x + dd)
+            y22 = int(center_y + dd)
+            new_bbox = (x11, y11, x22, y22)
+            new_bboxes.append(new_bbox)
+        return new_bboxes, landmarks
+
+
+def detection_face(img):
+    minsize = 20  # minimum size of face
+    threshold = [0.6, 0.7, 0.7]  # three steps's threshold
+    factor = 0.709  # scale factor
+    print('Creating networks and loading parameters')
+    with tf.Graph().as_default():
+        # gpu_memory_fraction = 1.0
+        # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_memory_fraction)
+        # sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=False))
+        sess = tf.Session()
+        with sess.as_default():
+            pnet, rnet, onet = detect_face.create_mtcnn(sess, None)
+            bboxes, landmarks = detect_face.detect_face(img, minsize, pnet, rnet, onet, threshold, factor)
+    landmarks = np.transpose(landmarks)
+    bboxes = bboxes.astype(int)
+    bboxes = [b[:4] for b in bboxes]
+    landmarks_list=[]
+    for landmark in landmarks:
+        face_landmarks = [[landmark[j], landmark[j + 5]] for j in range(5)]
+        landmarks_list.append(face_landmarks)
+    return bboxes,landmarks_list
+
+
 def test_model(args, facenet_or_insightface='facenet'):
 
     if facenet_or_insightface == 'facenet':
@@ -641,9 +807,50 @@ def test_model(args, facenet_or_insightface='facenet'):
         if y_pred[i] == test_label_list[i]:
             acc_4 += 1
     acc_4 /= len(predictions)
-    print(acc_4)
-    # -------------------------------------------------------------------------------------------------------------------------
+    print('acc_4:', acc_4)
+    # ----------------------------------------------------------------------------------------------------------------------------
 
+    # pred_score, issames_data = get_pair_scores(faces_data, issames_data, model_path, save_path=save_path)
+    # pred_score, issames_data = load_npy(dir_path=save_path)
+    #
+    # # 计算roc曲线
+    # fpr, tpr, roc_auc, threshold, optimal_idx = get_roc_curve(y_true=issames_data, y_score=pred_score, invert=True, plot_roc=True)
+    #
+    # print("fpr:{}".format(fpr))
+    # print("tpr:{}".format(tpr))
+    # print("threshold:{}".format(threshold))
+    # print("roc_auc:{}".format(roc_auc))
+    # print("optimal_idx :{},best_threshold :{} ".format(optimal_idx, threshold[optimal_idx]))
+
+    # Load and predict image (Use for loop)
+    pred_name, pred_score = compare_embadding(test_final_embeddings_output, final_embeddings_output, label_list, threshold=0.7)
+
+    acc_5 = 0
+    for i in range(len(pred_name)):
+        if pred_name[i] == test_label_list[i]:
+            acc_5 += 1
+    acc_5 /= len(predictions)
+    print('acc_5:', acc_5)
+
+    # Show image with predicted label
+    face_detect = FaceDetection()
+    # Draw borders and the results of face recognition on the image
+    show_info = [str(n) + ':' + str(s)[:5] for n, s in zip(pred_name, pred_score)]
+
+    for image_path, info in zip(test_image_list, show_info):
+        image = image_processing.read_image_gbk(image_path)
+        # Obtain determination flag bounding_box crop_image
+        bboxes, landmarks = face_detect.detect_face(image)
+        bboxes, landmarks = face_detect.get_square_bboxes(bboxes, landmarks, fixed="height")
+        if bboxes == [] or landmarks == []:
+            print("-----no face")
+
+        print("-----image have {} faces".format(len(bboxes)))
+        # face_images = image_processing.get_bboxes_image(image, bboxes, resize_height, resize_width)
+
+        image_processing.show_image_bboxes_text("face_recognition", image, bboxes, info)
+
+    # -------------------------------------------------------------------------------------------------------------------------
     start_time_classify = time.time()
     result = classify(args.classifier, args.use_trained_svm, final_embeddings_output, label_list, test_final_embeddings_output, test_label_list,
                       nrof_classes, index_dict)
@@ -686,6 +893,26 @@ def classify(classify_type, trained_svm, train_data, train_labels, test_data, te
     accuracy = classify_method.check_accuracy(model, label_lookup_dict)
 
     return accuracy
+
+
+def compare_embadding(pred_emb, dataset_emb, names_list, threshold=0.65):
+    # bounding_box matching tags
+    pred_num = len(pred_emb)
+    dataset_num = len(dataset_emb)
+    pred_name = []
+    pred_score = []
+    for i in range(pred_num):
+        dist_list = []
+        for j in range(dataset_num):
+            dist = np.sqrt(np.sum(np.square(np.subtract(pred_emb[i, :], dataset_emb[j, :]))))
+            dist_list.append(dist)
+        min_value = min(dist_list)
+        pred_score.append(min_value)
+        if min_value > threshold:
+            pred_name.append('unknown')
+        else:
+            pred_name.append(names_list[dist_list.index(min_value)])
+    return pred_name, pred_score
 
 
 def distance(emb1, emb2):

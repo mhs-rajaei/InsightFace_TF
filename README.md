@@ -1,8 +1,8 @@
 ## Insight Face in TensorFlow
 ### My Changes
 #### Thanks [Chen Wei](https://github.com/auroua/InsightFace_TF), [David Sandberg](https://github.com/davidsandberg/facenet), [Victor Zhang](https://github.com/VictorZhang2014/facenet) and many other peoples.
-##### Removing of tfrecords and adding my parser for loading raw 'jpeg' or 'png' images.
-##### Custom validation dataset and custom 'pairs.txt' creation from [here](https://github.com/VictorZhang2014/facenet/blob/master/mydata/generate_pairs.py) (I corrected some bugs of this code).
+##### Removing of tfrecords and adding parser for loading raw 'jpeg' or 'png' images.
+##### Custom validation dataset and custom 'pairs.txt' creation from [here](https://github.com/VictorZhang2014/facenet/blob/master/mydata/generate_pairs.py) (Some bugs removed).
 ##### Ready for use in google colab (you must upload your code, model, etc. Use this link for help: [here](https://zerowithdot.com/colab-workspace).
 ##### ArgParse removed and Class Args added.
 
